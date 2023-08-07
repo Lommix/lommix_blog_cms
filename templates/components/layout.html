@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Lommix's Blog</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/static/main.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <div class="header">{% include 'components/header.html' %}</div>
+      <div class="content">{% block content %}{% endblock %}</div>
+      <div class="footer">{% include 'components/footer.html' %}</div>
+    </div>
+    <script src="/static/htmx.min.js"></script>
+  </body>
+</html>

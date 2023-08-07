@@ -7,10 +7,12 @@ edition = "2021"
 
 [dependencies]
 axum = "0.6.18"
-minijinja = "1.0.5"
+mime_guess = "2.0.4"
+minijinja = {version = "1.0.5" , features = ["loader"]}
 rusqlite = "0.29.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.68"
-tokio = { version = "1.0", features = ["full"] }
+tokio = { version = "1.0", features = ["full","fs"] }
+tokio-util = {version = "0.7.8", features = ["full"]}
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
