@@ -1,40 +1,43 @@
 #![allow(unused)]
 
 use axum::{
-    body::StreamBody,
-    extract::State,
-    http::{StatusCode, Uri},
-    response::IntoResponse,
+    body::{Body, StreamBody},
+    extract::{Query, State},
+    http::{Request, Response, StatusCode, Uri},
+    response::{Html, IntoResponse},
     routing::{get, post},
     Json, Router,
 };
 use minijinja::context;
 use serde::{Deserialize, Serialize};
 use std::{
+    ffi::OsStr,
     io::BufReader,
     net::SocketAddr,
     path::PathBuf,
     sync::{Arc, Mutex},
 };
 
+use crate::api::blog_list;
+
 mod api;
-mod pages;
 mod store;
 
 const TEMPLATE_DIR: &str = "templates";
 const PAGE_DIR: &str = "pages";
+const TEMPLATE_EXTENSION: &str = "html";
 
 // --------------------------------------------------------
 // shared state
 // --------------------------------------------------------
 
-struct Shared<'source> {
+pub struct Shared {
     pub db: rusqlite::Connection,
-    pub templates: minijinja::Environment<'source>,
+    pub templates: minijinja::Environment<'static>,
 }
 
-unsafe impl<'source> Send for Shared<'source> {}
-unsafe impl<'source> Sync for Shared<'source> {}
+unsafe impl Send for Shared {}
+unsafe impl Sync for Shared {}
 
 // --------------------------------------------------------
 // main
@@ -42,7 +45,9 @@ unsafe impl<'source> Sync for Shared<'source> {}
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::default())
+        .init();
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
 
@@ -54,19 +59,33 @@ async fn main() {
     println!("listening on {}", addr);
 
     let app = Router::new()
-        .route("/static/*asset", get(asset))
-        .route("/*url", get(root))
-        .route("/", get(root))
+        .route("/static/*asset", get(asset_handle))
+        .route("/*url", get(default_handle))
+        .route("/", get(default_handle))
+        .nest("/api", api::api_routes())
         .with_state(state)
         .into_make_service();
+
 
     axum::Server::bind(&addr).serve(app).await.unwrap();
 }
 
-async fn asset(uri: Uri) -> impl IntoResponse {
-    // add code here
-    let p: PathBuf = uri.path().into();
-    let path = p.iter().skip(1).collect::<PathBuf>();
+async fn blog_handler(
+    axum::extract::Path(id): axum::extract::Path<i64>,
+    State(state): State<Arc<Shared>>,
+) -> Html<String> {
+    dbg!(id);
+    return Html("blog".to_string());
+}
+
+// --------------------------------------------------------
+// static files
+// --------------------------------------------------------
+async fn asset_handle(uri: Uri) -> impl IntoResponse {
+    let path = PathBuf::from(uri.path())
+        .iter()
+        .skip(1)
+        .collect::<PathBuf>();
 
     let file = match tokio::fs::File::open(&path).await {
         Ok(file) => file,
@@ -79,11 +98,11 @@ async fn asset(uri: Uri) -> impl IntoResponse {
     let content_type = match mime_guess::from_path(&path).first_raw() {
         Some(mime) => mime,
         None => {
-            return Err((StatusCode::BAD_REQUEST, "error getting mime"));
+            return Err((StatusCode::BAD_REQUEST, "unknown content type"));
         }
     };
 
-    println!("Serving Asset: {}", path.to_str().unwrap());
+    tracing::info!("serving asset: {:?}", path.to_str());
 
     let stream = tokio_util::io::ReaderStream::new(file);
     let body = StreamBody::new(stream);
@@ -92,8 +111,11 @@ async fn asset(uri: Uri) -> impl IntoResponse {
     Ok((headers, body))
 }
 
-async fn root(uri: Uri, State(shared): State<Arc<Shared<'_>>>) -> impl IntoResponse {
-    let route = (match uri.path().to_string().strip_suffix(".html") {
+// --------------------------------------------------------
+// page router
+// --------------------------------------------------------
+async fn default_handle(uri: Uri, State(shared): State<Arc<Shared>>) -> impl IntoResponse {
+    let route = (match uri.path().to_string().strip_suffix(TEMPLATE_EXTENSION) {
         Some(_) => uri.path().to_string(),
         None => format!("{}/index.html", uri.path().to_string()),
     })
@@ -118,6 +140,9 @@ async fn root(uri: Uri, State(shared): State<Arc<Shared<'_>>>) -> impl IntoRespo
     Ok((headers, tmpl.render(context! { name => "Lorenz" }).unwrap()))
 }
 
+// --------------------------------------------------------
+// loader
+// --------------------------------------------------------
 fn load_dir(dir: PathBuf) -> Vec<(String, PathBuf)> {
     let mut files = Vec::new();
     std::fs::read_dir(dir)
@@ -126,7 +151,7 @@ fn load_dir(dir: PathBuf) -> Vec<(String, PathBuf)> {
             let path = file.unwrap().path();
             if path.is_dir() {
                 files.append(&mut load_dir(path));
-            } else if path.is_file() && path.extension() == Some("html".as_ref()) {
+            } else if path.is_file() && path.extension() == Some(&OsStr::new(TEMPLATE_EXTENSION)) {
                 let route = path
                     .components()
                     .skip_while(|c| c.as_os_str() != TEMPLATE_DIR)

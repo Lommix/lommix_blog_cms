@@ -7,11 +7,15 @@
     <link href="/static/main.css" rel="stylesheet" />
   </head>
 
-  <body>
-    <div class="wrapper">
+  <body
+    class="w-full h-full bg-gradient-to-t from-slate-800 to-slate-950 flex justify-center"
+  >
+    <div class="wrapper max-w-7xl w-full h-full bg-white">
       <div class="header">{% include 'components/header.html' %}</div>
-      <div class="content">{% block content %}{% endblock %}</div>
-      <div class="footer">{% include 'components/footer.html' %}</div>
+      <div class="content bg-blue-400">{% block content %}{% endblock %}</div>
+      <div class="footer bg-zinc-700 w-full h-20">
+        {% include 'components/footer.html' %}
+      </div>
     </div>
     <script src="/static/htmx.min.js"></script>
   </body>
