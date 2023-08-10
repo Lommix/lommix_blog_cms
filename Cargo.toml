@@ -1,6 +1,6 @@
 [package]
 name = "lommix_website"
-description = "Lommix blog following the MASH-Stack"
+description = "Custom blog CMS"
 authors = ["Lorenz Mielke"]
 version = "0.1.0"
 edition = "2021"

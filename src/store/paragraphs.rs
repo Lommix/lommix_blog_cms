@@ -1,10 +1,11 @@
 use super::{SchemaUp, SchemaDown, Crud};
 use rusqlite::{
     types::{FromSql, ToSqlOutput},
-    ToSql,
+    ToSql, params,
 };
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub enum ParagraphType {
     Text,
     Image,
@@ -36,7 +37,7 @@ impl ToSql for ParagraphType {
 }
 
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Paragraph {
     pub id: Option<i64>,
     pub article_id: i64,
@@ -131,14 +132,14 @@ impl Crud for Paragraph {
         let mut stmt = con.prepare(
             "INSERT INTO paragraph (article_id, title, description, paragraph_type, position, content) VALUES (?, ?, ?, ?, ?, ?);",
         )?;
-        // stmt.execute(&[
-        //     &self.article_id,
-        //     &self.title,
-        //     &self.description,
-        //     &self.paragraph_type,
-        //     &self.position,
-        //     &self.content,
-        // ])?;
+        stmt.execute(params![
+            &self.article_id,
+            &self.title,
+            &self.description,
+            &self.paragraph_type,
+            &self.position,
+            &self.content,
+        ])?;
         self.id = Some(con.last_insert_rowid());
         Ok(())
     }

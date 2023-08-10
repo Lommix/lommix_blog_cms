@@ -2,34 +2,38 @@ use super::paragraphs::Paragraph;
 use super::{SchemaUp, SchemaDown, Crud};
 use axum::extract::{FromRequest, FromRequestParts};
 use axum::http::Request;
+use rusqlite::params;
 use rusqlite::{
     types::{FromSql, ToSqlOutput},
     ToSql,
 };
 use axum::async_trait;
+use serde::{Serialize, Deserialize};
 
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Article {
     pub id: Option<i64>,
     pub title: String,
     pub teaser: String,
     pub description: String,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: i64,
+    pub updated_at: i64,
     pub published: bool,
     pub paragraphs: Option<Vec<Paragraph>>,
 }
 
 impl Article{
     pub fn new(title: String) -> Self {
+
+        let now = chrono::offset::Local::now().timestamp();
         Article {
             id: None,
             title,
             teaser: "".to_string(),
             description: "".to_string(),
-            created_at: "".to_string(),
-            updated_at: "".to_string(),
+            created_at: now.clone(),
+            updated_at: now,
             published: false,
             paragraphs: None,
         }
@@ -44,8 +48,8 @@ id INTEGER PRIMARY KEY,
 title TEXT,
 teaser TEXT,
 description TEXT,
-created_at TEXT,
-updated_at TEXT,
+created_at INTEGER,
+updated_at INTEGER,
 published BOOLEAN
 );",
             (),
@@ -81,13 +85,13 @@ impl Crud for Article {
             "INSERT INTO article (title, teaser, description, created_at, updated_at, published) VALUES (?, ?, ?, ?, ?, ?)",
         )?;
 
-        stmt.execute(&[
+        stmt.execute(params![
             &self.title,
             &self.teaser,
             &self.description,
             &self.created_at,
             &self.updated_at,
-            &self.published.to_string(),
+            &self.published,
         ])?;
 
         self.id = Some(con.last_insert_rowid());

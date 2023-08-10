@@ -69,6 +69,7 @@ async fn main() {
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     let db_path = std::env::var("DATABASE_PATH").expect("DATABASE_PATH must be set");
     let db = rusqlite::Connection::open(&db_path).expect("Failed to open database");
+
     let state = Arc::new(Shared {
         db,
         templates: load_templates(),
@@ -84,6 +85,7 @@ async fn main() {
         Command::Run => {
             println!("listening on {}", addr);
             let app = Router::new()
+                .route("/favicon.ico", get(favicon))
                 .route("/static/*asset", get(asset_handle))
                 .route("/*url", get(default_handle))
                 .route("/", get(default_handle))
@@ -93,6 +95,10 @@ async fn main() {
             axum::Server::bind(&addr).serve(app).await.unwrap();
         }
     }
+}
+
+async fn favicon() -> impl IntoResponse {
+    Html("".to_string())
 }
 
 async fn blog_handler(

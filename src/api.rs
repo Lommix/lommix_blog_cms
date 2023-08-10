@@ -9,6 +9,7 @@ use axum::response::{Html, IntoResponse};
 use axum::routing::{delete, get, post};
 use axum::Form;
 use axum::Router;
+use minijinja::context;
 use std::sync::Arc;
 
 pub fn api_routes() -> Router<Arc<Shared>, axum::body::Body> {
@@ -38,8 +39,14 @@ pub async fn init_blog(State(state): State<Arc<Shared>>) -> impl IntoResponse {
 // List
 // ---------------------------
 pub async fn article_list(State(state): State<Arc<Shared>>) -> impl IntoResponse {
-    let articles = Article::find_all(&state.db);
-    Html(format!("{:?}", articles))
+    let articles = Article::find_all(&state.db).expect("failed to find all articles");
+
+    let tmpl = state
+        .templates
+        .get_template("components/article_preview_box.html")
+        .unwrap();
+
+    Html(tmpl.render(context! {articles => articles}).unwrap())
 }
 // ---------------------------
 // Detail
