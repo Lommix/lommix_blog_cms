@@ -8,6 +8,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use clap::{Args, Parser};
 use minijinja::context;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -18,7 +19,9 @@ use std::{
     sync::{Arc, Mutex, RwLock},
 };
 
+use crate::store::{articles::Article, paragraphs::Paragraph};
 use dotenv::dotenv;
+use store::SchemaUp;
 
 mod api;
 mod store;
@@ -50,6 +53,12 @@ pub struct Shared {
 unsafe impl Send for Shared {}
 unsafe impl Sync for Shared {}
 
+#[derive(Parser)]
+enum Command {
+    Init,
+    Run,
+}
+
 // --------------------------------------------------------
 // main
 // --------------------------------------------------------
@@ -57,33 +66,33 @@ unsafe impl Sync for Shared {}
 async fn main() {
     dotenv().ok();
 
-    tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::default())
-        .init();
-
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     let db_path = std::env::var("DATABASE_PATH").expect("DATABASE_PATH must be set");
     let db = rusqlite::Connection::open(&db_path).expect("Failed to open database");
-
-    let templates = load_templates();
-
     let state = Arc::new(Shared {
         db,
-        templates,
+        templates: load_templates(),
         sessions: RwLock::new(Vec::new()),
     });
 
-    println!("listening on {}", addr);
-
-    let app = Router::new()
-        .route("/static/*asset", get(asset_handle))
-        .route("/*url", get(default_handle))
-        .route("/", get(default_handle))
-        .nest("/api", api::api_routes())
-        .with_state(state)
-        .into_make_service();
-
-    axum::Server::bind(&addr).serve(app).await.unwrap();
+    let cmd = Command::parse();
+    match cmd {
+        Command::Init => {
+            Article::up(&state.db).unwrap();
+            Paragraph::up(&state.db).unwrap();
+        }
+        Command::Run => {
+            println!("listening on {}", addr);
+            let app = Router::new()
+                .route("/static/*asset", get(asset_handle))
+                .route("/*url", get(default_handle))
+                .route("/", get(default_handle))
+                .nest("/api", api::api_routes())
+                .with_state(state)
+                .into_make_service();
+            axum::Server::bind(&addr).serve(app).await.unwrap();
+        }
+    }
 }
 
 async fn blog_handler(
@@ -157,7 +166,7 @@ async fn default_handle(uri: Uri, State(shared): State<Arc<Shared>>) -> impl Int
 }
 
 // --------------------------------------------------------
-// loader
+// file loader
 // --------------------------------------------------------
 fn load_dir(dir: PathBuf) -> Vec<(String, PathBuf)> {
     let mut files = Vec::new();

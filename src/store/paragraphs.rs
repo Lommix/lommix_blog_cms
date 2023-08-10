@@ -4,7 +4,7 @@ use rusqlite::{
     ToSql,
 };
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize)]
 pub enum ParagraphType {
     Text,
     Image,
@@ -36,7 +36,7 @@ impl ToSql for ParagraphType {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize)]
 pub struct Paragraph {
     pub id: Option<i64>,
     pub article_id: i64,

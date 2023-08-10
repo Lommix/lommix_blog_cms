@@ -21,6 +21,21 @@ pub struct Article {
     pub paragraphs: Option<Vec<Paragraph>>,
 }
 
+impl Article{
+    pub fn new(title: String) -> Self {
+        Article {
+            id: None,
+            title,
+            teaser: "".to_string(),
+            description: "".to_string(),
+            created_at: "".to_string(),
+            updated_at: "".to_string(),
+            published: false,
+            paragraphs: None,
+        }
+    }
+}
+
 impl SchemaUp for Article {
     fn up(con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
         con.execute(

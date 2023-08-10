@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 pub fn api_routes() -> Router<Arc<Shared>, axum::body::Body> {
     Router::new()
-        .route("/article/create", post(article_create))
+        .route("/article", post(article_create).get(article_list))
         .route(
             "/article/:id",
             get(article_get).delete(article_delete).put(article_update),
@@ -38,7 +38,7 @@ pub async fn init_blog(State(state): State<Arc<Shared>>) -> impl IntoResponse {
 // List
 // ---------------------------
 pub async fn article_list(State(state): State<Arc<Shared>>) -> impl IntoResponse {
-    let articles = Article::find_all(&state.db).unwrap();
+    let articles = Article::find_all(&state.db);
     Html(format!("{:?}", articles))
 }
 // ---------------------------
@@ -54,19 +54,27 @@ async fn paragraph_get(Path(id): Path<i64>, State(state): State<Arc<Shared>>) ->
 // ---------------------------
 // Create
 // ---------------------------
-#[derive(serde::Deserialize, serde::Serialize)]
-struct ArticleForm {
+#[derive(serde::Deserialize)]
+pub struct ArticleForm {
     title: String,
     teaser: String,
     description: String,
 }
 
 pub async fn article_create(
-    Form(form): Form<ArticleForm>,
     State(state): State<Arc<Shared>>,
+    Form(form): Form<ArticleForm>,
 ) -> impl IntoResponse {
-    Html(format!("article_create {}", form.title))
+    let mut article = Article::new(form.title);
+    match article.insert(&state.db) {
+        Ok(_) => Ok((StatusCode::CREATED, Html("created".to_string()))),
+        Err(e) => Err((
+            StatusCode::BAD_REQUEST,
+            Html("failed to create".to_string()),
+        )),
+    }
 }
+
 async fn paragraph_create(State(state): State<Arc<Shared>>) -> impl IntoResponse {
     Html("paragraph_create".to_string())
 }

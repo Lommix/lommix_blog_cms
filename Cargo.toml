@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 axum = "0.6.18"
 chrono = "0.4.26"
+clap = {version="4.3.21", features=["derive"]}
 dotenv = "0.15.0"
 mime_guess = "2.0.4"
 minijinja = {version = "1.0.5" , features = ["loader"]}
