@@ -4,4 +4,19 @@
 
 <h1>HOME</h1>
 
+
+<div hx-get="/api/article" hx-trigger="load">
+	loading ...
+</div>
+
+<div class="text-black text-xl font-bold" id="test">
+</div>
+
+<form hx-post="/api/article" hx-target="#test">
+	<input class="w-full" type="text" placeholder="title" name="title" />
+	<input class="w-full" type="text" placeholder="description" name="description" />
+	<input class="w-full" type="text" placeholder="teaser" name="teaser" />
+	<input class="w-full bg-blue-400 p-2 rounded" type="submit" value="Submit" />
+</form>
+
 {% endblock %}

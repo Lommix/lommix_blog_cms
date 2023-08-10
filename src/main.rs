@@ -15,10 +15,10 @@ use std::{
     io::BufReader,
     net::SocketAddr,
     path::PathBuf,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, RwLock},
 };
 
-use crate::api::blog_list;
+use dotenv::dotenv;
 
 mod api;
 mod store;
@@ -30,10 +30,21 @@ const TEMPLATE_EXTENSION: &str = "html";
 // --------------------------------------------------------
 // shared state
 // --------------------------------------------------------
+pub enum UserState {
+    Unknown,
+    User,
+    Admin,
+}
+
+pub struct Session {
+    pub id: u128,
+    pub user_state: UserState,
+}
 
 pub struct Shared {
     pub db: rusqlite::Connection,
     pub templates: minijinja::Environment<'static>,
+    pub sessions: RwLock<Vec<Session>>,
 }
 
 unsafe impl Send for Shared {}
@@ -42,18 +53,24 @@ unsafe impl Sync for Shared {}
 // --------------------------------------------------------
 // main
 // --------------------------------------------------------
-
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
+
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::default())
         .init();
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let db_path = std::env::var("DATABASE_PATH").expect("DATABASE_PATH must be set");
+    let db = rusqlite::Connection::open(&db_path).expect("Failed to open database");
+
+    let templates = load_templates();
 
     let state = Arc::new(Shared {
-        db: rusqlite::Connection::open_in_memory().unwrap(),
-        templates: load_templates(),
+        db,
+        templates,
+        sessions: RwLock::new(Vec::new()),
     });
 
     println!("listening on {}", addr);
@@ -65,7 +82,6 @@ async fn main() {
         .nest("/api", api::api_routes())
         .with_state(state)
         .into_make_service();
-
 
     axum::Server::bind(&addr).serve(app).await.unwrap();
 }

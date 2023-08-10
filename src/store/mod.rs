@@ -1,34 +1,31 @@
-mod blog;
+pub mod articles;
+pub mod paragraphs;
 
 pub fn schema_up(con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
     Ok(())
 }
 
-
-pub trait Find
+pub trait Crud
 where
     Self: Sized,
 {
-    fn find(id: i64) -> Result<Self, rusqlite::Error>;
+    fn find(id: i64, con: &rusqlite::Connection) -> Result<Self, rusqlite::Error>;
+    fn find_all(con: &rusqlite::Connection) -> Result<Vec<Self>, rusqlite::Error>;
+    fn insert(&mut self, con: &rusqlite::Connection) -> Result<(), rusqlite::Error>;
+    fn update(&self, con: &rusqlite::Connection) -> Result<(), rusqlite::Error>;
+    fn delete(id: i64, con: &rusqlite::Connection) -> Result<(), rusqlite::Error>;
 }
 
-pub trait FindAll
+pub trait SchemaUp
 where
     Self: Sized,
 {
-    fn findAll() -> Result<Vec<Self>, rusqlite::Error>;
+    fn up(con: &rusqlite::Connection) -> Result<(), rusqlite::Error>;
 }
 
-pub trait Insert
+pub trait SchemaDown
 where
     Self: Sized,
 {
-    fn insert(&self) -> Result<(), rusqlite::Error>;
-}
-
-pub trait Upate
-where
-    Self: Sized,
-{
-    fn update(&self) -> Result<(), rusqlite::Error>;
+    fn down(con: &rusqlite::Connection) -> Result<(), rusqlite::Error>;
 }
