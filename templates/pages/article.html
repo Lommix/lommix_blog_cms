@@ -2,6 +2,30 @@
 
 {% block content %}
 
-<h1>{{article.title}}</h1>
+<div class="bg-slate-600 p-4">
+	<h1>{{article.title}}</h1>
+	<p>{{article.description}}</p>
+</div>
+
+<div id="paragraphs">
+	{% for paragraph in article.paragraphs %}
+		{% with paragraph=paragraph, auth=auth %}
+			{% include 'components/paragraph.html' %}
+		{% endwith %}
+	{% endfor %}
+</div>
+
+<div>
+	<form hx-post="/api/paragraph" hx-swap="afterend" hx-target="#paragraphs">
+		<input type="hidden" name="article_id" value="{{article.id}}" />
+		<textarea type="text" name="content"></textarea>
+		<select name="paragraph_type">
+			<option>Markdown</option>
+			<option>Video</option>
+			<option>Wasm</option>
+		</select>
+		<input type="submit" />
+	</form>
+</div>
 
 {% endblock %}

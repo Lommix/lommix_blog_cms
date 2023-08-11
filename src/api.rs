@@ -1,6 +1,7 @@
 use crate::auth::Auth;
 use crate::store::articles::Article;
 use crate::store::paragraphs::Paragraph;
+use crate::store::paragraphs::ParagraphType;
 
 use super::store::*;
 use super::SharedState;
@@ -132,9 +133,36 @@ async fn paragraph_get(
     Html("paragraph_detail".to_string())
 }
 
-async fn paragraph_create(State(state): State<Arc<SharedState>>, auth: Auth) -> impl IntoResponse {
-    is_admin!(auth);
-    Ok(Html("paragraph_create".to_string()))
+#[derive(serde::Deserialize)]
+struct ParagraphForm {
+    id: Option<i64>,
+    article_id: i64,
+    paragraph_type: ParagraphType,
+    content: String,
+}
+
+async fn paragraph_create(
+    State(state): State<Arc<SharedState>>,
+    Form(form): Form<ParagraphForm>,
+) -> impl IntoResponse {
+    let paragraph = Paragraph {
+        id: form.id,
+        article_id: form.article_id,
+        paragraph_type: form.paragraph_type,
+        content: form.content,
+        position: 0,
+        title: "".to_string(),
+        description: "".to_string(),
+    }
+    .insert(&state.db);
+
+    match paragraph {
+        Ok(p) => Ok((StatusCode::CREATED, Html("created".to_string()))),
+        Err(_) => Err((
+            StatusCode::BAD_REQUEST,
+            Html("failed to create".to_string()),
+        )),
+    }
 }
 async fn paragraph_delete(
     Path(id): Path<i64>,
@@ -142,7 +170,13 @@ async fn paragraph_delete(
     auth: Auth,
 ) -> impl IntoResponse {
     is_admin!(auth);
-    Ok(Html("paragraph_delete".to_string()))
+    match Paragraph::delete(id, &state.db) {
+        Ok(_) => Ok((StatusCode::OK, Html("deleted".to_string()))),
+        Err(e) => Err((
+            StatusCode::BAD_REQUEST,
+            Html("failed to delete".to_string()),
+        )),
+    }
 }
 // ------------------------------------------------------
 // files

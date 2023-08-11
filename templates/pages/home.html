@@ -10,17 +10,12 @@
 	</button>
 </div>
 
-
-<div class="p-2 bg-green-500" hx-get="/api/file_list" hx-trigger="load">
-	loading ...
-</div>
-
 <div id="dropdown" class="w-full block relative ease-in transform transition-all duration-300 h-0">
 	<div class="absolute w-full bg-slate-200 rounded-lg p-2 left-0">
 		<form hx-post="/api/article" class="create flex flex-row items-center" hx-swap="none">
 			<label class="h-full text-center mx-4" for="title">Title:</label>
 			<input class="w-full" type="text" name="title" />
-			<input class="mx-4 bg-green-500 p-2 rounded hover:bg-green-600 text-white" type="submit" value="Create" />
+			<input class="border-slate-500 border-2 px-3 rounded-lg hover:bg-slate-300" type="submit" value="Create" />
 		</form>
 	</div>
 </div>

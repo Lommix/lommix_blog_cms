@@ -1,5 +1,6 @@
 use super::paragraphs::Paragraph;
-use super::{SchemaUp, SchemaDown, Crud};
+use super::{Crud, SchemaDown, SchemaUp};
+use axum::async_trait;
 use axum::extract::{FromRequest, FromRequestParts};
 use axum::http::Request;
 use rusqlite::params;
@@ -7,9 +8,7 @@ use rusqlite::{
     types::{FromSql, ToSqlOutput},
     ToSql,
 };
-use axum::async_trait;
-use serde::{Serialize, Deserialize};
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Article {
@@ -23,9 +22,8 @@ pub struct Article {
     pub paragraphs: Option<Vec<Paragraph>>,
 }
 
-impl Article{
+impl Article {
     pub fn new(title: String) -> Self {
-
         let now = chrono::offset::Local::now().timestamp();
         Article {
             id: None,
@@ -112,8 +110,9 @@ impl Crud for Article {
                 created_at: row.get(4)?,
                 updated_at: row.get(5)?,
                 published: row.get(6)?,
-                paragraphs: None,
+                paragraphs: Paragraph::find_by_article_id(id, con).ok(),
             }),
+
             None => Err(rusqlite::Error::QueryReturnedNoRows),
         }
     }
@@ -137,9 +136,7 @@ impl Crud for Article {
     }
 
     fn delete(id: i64, con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
-        let mut stmt = con.prepare(
-            "DELETE FROM article WHERE id = ?"
-        )?;
+        let mut stmt = con.prepare("DELETE FROM article WHERE id = ?")?;
         stmt.execute(&[&id])?;
         Ok(())
     }

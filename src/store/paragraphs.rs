@@ -1,14 +1,14 @@
-use super::{SchemaUp, SchemaDown, Crud};
+use super::{Crud, SchemaDown, SchemaUp};
 use rusqlite::{
+    params,
     types::{FromSql, ToSqlOutput},
-    ToSql, params,
+    ToSql,
 };
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum ParagraphType {
-    Text,
-    Image,
+    Markdown,
     Video,
     Wasm,
 }
@@ -16,11 +16,10 @@ pub enum ParagraphType {
 impl FromSql for ParagraphType {
     fn column_result(value: rusqlite::types::ValueRef) -> rusqlite::types::FromSqlResult<Self> {
         match value.as_str()? {
-            "text" => Ok(ParagraphType::Text),
-            "image" => Ok(ParagraphType::Image),
+            "markdown" => Ok(ParagraphType::Markdown),
             "video" => Ok(ParagraphType::Video),
             "wasm" => Ok(ParagraphType::Wasm),
-            _ => Ok(ParagraphType::Text),
+            _ => Ok(ParagraphType::Markdown),
         }
     }
 }
@@ -28,14 +27,12 @@ impl FromSql for ParagraphType {
 impl ToSql for ParagraphType {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         match self {
-            ParagraphType::Text => Ok("text".into()),
-            ParagraphType::Image => Ok("image".into()),
+            ParagraphType::Markdown => Ok("markdown".into()),
             ParagraphType::Video => Ok("video".into()),
             ParagraphType::Wasm => Ok("wasm".into()),
         }
     }
 }
-
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Paragraph {
@@ -49,16 +46,17 @@ pub struct Paragraph {
 }
 
 impl Paragraph {
-    fn find_by_article_id(
+    pub fn find_by_article_id(
         article_id: i64,
         con: &rusqlite::Connection,
-    ) -> Result<Self, rusqlite::Error> {
+    ) -> Result<Vec<Self>, rusqlite::Error> {
         let mut stmt = con.prepare(
             "SELECT id, article_id, title, description, paragraph_type, position, content FROM paragraph WHERE article_id = ?"
         )?;
         let mut rows = stmt.query(&[&article_id])?;
-        match rows.next()? {
-            Some(row) => Ok(Paragraph {
+        let mut paragraphs = Vec::new();
+        while let Some(row) = rows.next()? {
+            paragraphs.push(Paragraph {
                 id: row.get(0)?,
                 article_id: row.get(1)?,
                 title: row.get(2)?,
@@ -66,9 +64,9 @@ impl Paragraph {
                 paragraph_type: row.get(4)?,
                 position: row.get(5)?,
                 content: row.get(6)?,
-            }),
-            None => Err(rusqlite::Error::QueryReturnedNoRows),
+            })
         }
+        Ok(paragraphs)
     }
 }
 
@@ -163,9 +161,7 @@ impl Crud for Paragraph {
     }
 
     fn delete(id: i64, con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
-        let mut stmt = con.prepare(
-            "DELETE FROM paragraph WHERE id = ?"
-        )?;
+        let mut stmt = con.prepare("DELETE FROM paragraph WHERE id = ?")?;
         stmt.execute(&[&id])?;
         Ok(())
     }

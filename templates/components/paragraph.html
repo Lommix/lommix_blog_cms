@@ -1,0 +1,20 @@
+<div
+	id="para-{{paragraph.id}}"
+  class="p-4 w-full mt-3 text-white text-xl border-t-2"
+>
+  <h1>{{paragraph.title}}</h1>
+  <p>{{paragraph.content}}</p>
+
+	{% if auth.user_state == "Admin" %}
+
+  <button
+    hx-delete="/api/paragraph/{{ paragraph.id }}"
+    hx-confirm="delete this?"
+    hx-target="#para-{{paragraph.id}}"
+    hx-swap="delete"
+  >
+    X
+  </button>
+
+  {% endif %}
+</div>
