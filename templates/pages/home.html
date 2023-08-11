@@ -1,0 +1,37 @@
+{% extends 'components/layout.html' %}
+
+{% block content %}
+
+{% if auth.user_state == "Admin" %}
+<div class="w-ful relative">
+	<button class="bg-green-400 px-2 py-1 rounded-md font-bold text-gray-600 absolute left-0 -top-11"
+		onclick="slide_down('dropdown', 55)">
+		+
+	</button>
+</div>
+
+
+<div class="p-2 bg-green-500" hx-get="/api/file_list" hx-trigger="load">
+	loading ...
+</div>
+
+<div id="dropdown" class="w-full block relative ease-in transform transition-all duration-300 h-0">
+	<div class="absolute w-full bg-slate-200 rounded-lg p-2 left-0">
+		<form hx-post="/api/article" class="create flex flex-row items-center" hx-swap="none">
+			<label class="h-full text-center mx-4" for="title">Title:</label>
+			<input class="w-full" type="text" name="title" />
+			<input class="mx-4 bg-green-500 p-2 rounded hover:bg-green-600 text-white" type="submit" value="Create" />
+		</form>
+	</div>
+</div>
+{% endif %}
+
+<div id="preview" hx-get="/api/article" hx-trigger="load, submit from:.create">
+	loading ...
+</div>
+
+<div class="text-black text-xl font-bold" id="test">
+</div>
+
+
+{% endblock %}

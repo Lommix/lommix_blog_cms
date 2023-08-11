@@ -1,22 +1,27 @@
 <!doctype html>
 <html lang="en">
   <head>
+    {% block head %}
     <title>Lommix's Blog</title>
+    {% endblock %}
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="/static/main.css" rel="stylesheet" />
   </head>
 
   <body
-    class="w-full h-full bg-gradient-to-t from-slate-800 to-slate-950 flex justify-center"
+    class="w-full h-full bg-gradient-to-t from-slate-800 to-slate-950 flex justify-center h-screen"
   >
-    <div class="wrapper max-w-7xl w-full h-full bg-white">
+    <div class="wrapper max-w-7xl w-full h-full relative">
       <div class="header">{% include 'components/header.html' %}</div>
-      <div class="content bg-blue-400">{% block content %}{% endblock %}</div>
-      <div class="footer bg-zinc-700 w-full h-20">
-        {% include 'components/footer.html' %}
+      <div class="content h-fit mt-3">{% block content %}{% endblock %}</div>
+      <div class="h-20 block">
+        <div class="footer bg-zinc-700 w-full h-20 fixed bottom-0 left-0">
+          {% include 'components/footer.html' %}
+        </div>
       </div>
     </div>
     <script src="/static/htmx.min.js"></script>
+    <script src="/static/main.js"></script>
   </body>
 </html>

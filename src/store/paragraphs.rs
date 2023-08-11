@@ -145,10 +145,28 @@ impl Crud for Paragraph {
     }
 
     fn update(&self, con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
-        todo!()
+        let mut stmt = con.prepare(
+            "UPDATE paragraph SET article_id = ?, title = ?, description = ?, paragraph_type = ?, position = ?, content = ? WHERE id = ?;",
+        )?;
+
+        stmt.execute(params![
+            &self.article_id,
+            &self.title,
+            &self.description,
+            &self.paragraph_type,
+            &self.position,
+            &self.content,
+            &self.id
+        ])?;
+
+        Ok(())
     }
 
     fn delete(id: i64, con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
-        todo!()
+        let mut stmt = con.prepare(
+            "DELETE FROM paragraph WHERE id = ?"
+        )?;
+        stmt.execute(&[&id])?;
+        Ok(())
     }
 }

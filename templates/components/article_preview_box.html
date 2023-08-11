@@ -1,11 +1,24 @@
-{%	for article in articles %}
+{% for article in articles %}
 
-<div class="text-black text-xl font-bold">
-	{{ article.title }}
-	<hr />
-	{{ article.description }}
-	<hr />
-	{{ article.teaser }}
+<div
+  id="preview-{{article.id}}"
+  class="text-black h-64 relative text-xl font-bold rounded-lg my-3 px-2 bg-slate-700"
+>
+  <a href="/article/{{ article.id }}"> {{ article.title }} </a>
+  {{ article.description }} {{ article.teaser }}
+  {% if auth.user_state == "Admin" %}
+  <div class="absolute top-1 right-1">
+    <button
+      class="bg-red-800 text-white font-normal text-lg px-2 rounded-full"
+      hx-delete="/api/article/{{ article.id }}"
+      hx-confirm="delete this?"
+      hx-target="#preview-{{article.id}}"
+      hx-swap="delete"
+    >
+      X
+    </button>
+  </div>
+  {% endif %}
 </div>
 
-{%	endfor %}
+{% endfor %}

@@ -1,8 +1,9 @@
+use crate::auth::Auth;
 use crate::store::articles::Article;
 use crate::store::paragraphs::Paragraph;
 
 use super::store::*;
-use super::Shared;
+use super::SharedState;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse};
@@ -12,7 +13,18 @@ use axum::Router;
 use minijinja::context;
 use std::sync::Arc;
 
-pub fn api_routes() -> Router<Arc<Shared>, axum::body::Body> {
+macro_rules! is_admin {
+    ($state:expr) => {
+        if !$state.is_admin() {
+            return Err((
+                StatusCode::NETWORK_AUTHENTICATION_REQUIRED,
+                Html("not authorized".to_string()),
+            ));
+        }
+    };
+}
+
+pub fn api_routes() -> Router<Arc<SharedState>, axum::body::Body> {
     Router::new()
         .route("/article", post(article_create).get(article_list))
         .route(
@@ -26,19 +38,13 @@ pub fn api_routes() -> Router<Arc<Shared>, axum::body::Body> {
                 .delete(paragraph_delete)
                 .put(paragraph_update),
         )
-        .route("/init", get(init_blog))
+        .route("/file_list", get(file_list))
 }
 
-pub async fn init_blog(State(state): State<Arc<Shared>>) -> impl IntoResponse {
-    Article::up(&state.db).unwrap();
-    Paragraph::up(&state.db).unwrap();
-    Html("created database".to_string());
-}
-
-// ---------------------------
-// List
-// ---------------------------
-pub async fn article_list(State(state): State<Arc<Shared>>) -> impl IntoResponse {
+// ------------------------------------------------------
+// articles
+// ------------------------------------------------------
+pub async fn article_list(State(state): State<Arc<SharedState>>, auth: Auth) -> impl IntoResponse {
     let articles = Article::find_all(&state.db).expect("failed to find all articles");
 
     let tmpl = state
@@ -46,30 +52,45 @@ pub async fn article_list(State(state): State<Arc<Shared>>) -> impl IntoResponse
         .get_template("components/article_preview_box.html")
         .unwrap();
 
-    Html(tmpl.render(context! {articles => articles}).unwrap())
+    Html(
+        tmpl.render(context! {
+            articles => articles,
+            auth => auth
+        })
+        .unwrap(),
+    )
 }
-// ---------------------------
-// Detail
-// ---------------------------
-async fn article_get(Path(id): Path<i64>, State(state): State<Arc<Shared>>) -> impl IntoResponse {
+
+async fn article_delete(
+    Path(id): Path<i64>,
+    State(state): State<Arc<SharedState>>,
+    auth: Auth,
+) -> impl IntoResponse {
+    is_admin!(auth);
+    match Article::delete(id, &state.db) {
+        Ok(_) => Ok((StatusCode::OK, Html("deleted".to_string()))),
+        Err(e) => Err((
+            StatusCode::BAD_REQUEST,
+            Html("failed to delete".to_string()),
+        )),
+    }
+}
+
+async fn article_get(
+    Path(id): Path<i64>,
+    State(state): State<Arc<SharedState>>,
+) -> impl IntoResponse {
+    let article = Article::find(id, &state.db).unwrap();
     Html("blog_detail".to_string())
 }
 
-async fn paragraph_get(Path(id): Path<i64>, State(state): State<Arc<Shared>>) -> impl IntoResponse {
-    Html("paragraph_detail".to_string())
-}
-// ---------------------------
-// Create
-// ---------------------------
 #[derive(serde::Deserialize)]
 pub struct ArticleForm {
     title: String,
-    teaser: String,
-    description: String,
 }
 
 pub async fn article_create(
-    State(state): State<Arc<Shared>>,
+    State(state): State<Arc<SharedState>>,
     Form(form): Form<ArticleForm>,
 ) -> impl IntoResponse {
     let mut article = Article::new(form.title);
@@ -82,37 +103,75 @@ pub async fn article_create(
     }
 }
 
-async fn paragraph_create(State(state): State<Arc<Shared>>) -> impl IntoResponse {
-    Html("paragraph_create".to_string())
-}
-// ---------------------------
-// Delete
-// ----------------------------
-async fn article_delete(
+async fn article_update(
     Path(id): Path<i64>,
-    State(state): State<Arc<Shared>>,
+    State(state): State<Arc<SharedState>>,
+    auth: Auth,
 ) -> impl IntoResponse {
-    Html("blog_delete".to_string())
+    is_admin!(auth);
+    Ok(Html("blog_update".to_string()))
+}
+
+async fn paragraph_update(
+    Path(id): Path<i64>,
+    State(state): State<Arc<SharedState>>,
+    auth: Auth,
+) -> impl IntoResponse {
+    is_admin!(auth);
+    Ok(Html("paragraph_update".to_string()))
+}
+
+// ------------------------------------------------------
+// paragraphs
+// ------------------------------------------------------
+async fn paragraph_get(
+    Path(id): Path<i64>,
+    State(state): State<Arc<SharedState>>,
+) -> impl IntoResponse {
+    let paragraph = Paragraph::find(id, &state.db).unwrap();
+    Html("paragraph_detail".to_string())
+}
+
+async fn paragraph_create(State(state): State<Arc<SharedState>>, auth: Auth) -> impl IntoResponse {
+    is_admin!(auth);
+    Ok(Html("paragraph_create".to_string()))
 }
 async fn paragraph_delete(
     Path(id): Path<i64>,
-    State(state): State<Arc<Shared>>,
+    State(state): State<Arc<SharedState>>,
+    auth: Auth,
 ) -> impl IntoResponse {
-    Html("Paragraph_delete".to_string())
+    is_admin!(auth);
+    Ok(Html("paragraph_delete".to_string()))
+}
+// ------------------------------------------------------
+// files
+// ------------------------------------------------------
+async fn file_list(auth: Auth) -> impl IntoResponse {
+    is_admin!(auth);
+
+    let file_list = match crate::util::Util::load_files_rec("static/media".into()) {
+        Ok(file_list) => file_list,
+        Err(_) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Html("failed to delete".to_string()),
+            ))
+        }
+    };
+
+    let file_string = file_list
+        .iter()
+        .map(|(_, path)| path.to_str().unwrap().to_string())
+        .collect::<Vec<_>>()
+        .join("\n")
+        .to_string();
+
+    Ok(Html(file_string))
 }
 
-// ---------------------------
-// Update
-// ----------------------------
-async fn article_update(
-    Path(id): Path<i64>,
-    State(state): State<Arc<Shared>>,
-) -> impl IntoResponse {
-    Html("blog_update".to_string())
-}
-async fn paragraph_update(
-    Path(id): Path<i64>,
-    State(state): State<Arc<Shared>>,
-) -> impl IntoResponse {
-    Html("paragraph_update".to_string())
+async fn file_upload(auth: Auth) -> impl IntoResponse {
+    is_admin!(auth);
+
+    Ok(Html("file_upload".to_string()))
 }

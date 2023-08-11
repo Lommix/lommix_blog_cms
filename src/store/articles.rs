@@ -62,7 +62,7 @@ impl Crud for Article {
     fn find_all(con: &rusqlite::Connection) -> Result<Vec<Self>, rusqlite::Error> {
         let mut articles = Vec::new();
         let mut stmt = con.prepare(
-            "SELECT id, title, teaser, description, created_at, updated_at, published FROM article",
+            "SELECT id, title, teaser, description, created_at, updated_at, published FROM article ORDER BY created_at DESC",
         )?;
         let mut rows = stmt.query([])?;
         while let Some(row) = rows.next()? {
@@ -119,10 +119,28 @@ impl Crud for Article {
     }
 
     fn update(&self, con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
-        todo!()
+        let mut stmt = con.prepare(
+            "UPDATE article SET title = ?, teaser = ?, description = ?, created_at = ?, updated_at = ?, published = ? WHERE id = ?",
+        )?;
+
+        stmt.execute(params![
+            &self.title,
+            &self.teaser,
+            &self.description,
+            &self.created_at,
+            &self.updated_at,
+            &self.published,
+            &self.id
+        ])?;
+
+        Ok(())
     }
 
     fn delete(id: i64, con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
-        todo!()
+        let mut stmt = con.prepare(
+            "DELETE FROM article WHERE id = ?"
+        )?;
+        stmt.execute(&[&id])?;
+        Ok(())
     }
 }
