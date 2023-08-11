@@ -39,6 +39,7 @@ pub fn api_routes() -> Router<Arc<SharedState>, axum::body::Body> {
                 .delete(paragraph_delete)
                 .put(paragraph_update),
         )
+        .route("/paragraph/parsed/:id", get(paragraph_parsed))
         .route("/file_list", get(file_list))
 }
 
@@ -47,7 +48,6 @@ pub fn api_routes() -> Router<Arc<SharedState>, axum::body::Body> {
 // ------------------------------------------------------
 pub async fn article_list(State(state): State<Arc<SharedState>>, auth: Auth) -> impl IntoResponse {
     let articles = Article::find_all(&state.db).expect("failed to find all articles");
-
     let tmpl = state
         .templates
         .get_template("components/article_preview_box.html")
@@ -113,15 +113,6 @@ async fn article_update(
     Ok(Html("blog_update".to_string()))
 }
 
-async fn paragraph_update(
-    Path(id): Path<i64>,
-    State(state): State<Arc<SharedState>>,
-    auth: Auth,
-) -> impl IntoResponse {
-    is_admin!(auth);
-    Ok(Html("paragraph_update".to_string()))
-}
-
 // ------------------------------------------------------
 // paragraphs
 // ------------------------------------------------------
@@ -139,6 +130,29 @@ struct ParagraphForm {
     article_id: i64,
     paragraph_type: ParagraphType,
     content: String,
+}
+
+async fn paragraph_update(
+    State(state): State<Arc<SharedState>>,
+    Form(form): Form<ParagraphForm>,
+) -> impl IntoResponse {
+    let id = match form.id {
+        Some(id) => id,
+        None => return Err((StatusCode::BAD_REQUEST, "missing id".to_string())),
+    };
+
+    let mut paragraph = match Paragraph::find(id, &state.db) {
+        Ok(p) => p,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "not found".to_string())),
+    };
+
+    paragraph.content = form.content;
+    paragraph.paragraph_type = form.paragraph_type;
+
+    match paragraph.update(&state.db) {
+        Ok(_) => Ok((StatusCode::OK, Html("updated".to_string()))),
+        Err(_) => Err((StatusCode::BAD_REQUEST, "failed to update".to_string())),
+    }
 }
 
 async fn paragraph_create(
@@ -164,6 +178,17 @@ async fn paragraph_create(
         )),
     }
 }
+
+async fn paragraph_parsed(
+    Path(id): Path<i64>,
+    State(state): State<Arc<SharedState>>,
+) -> impl IntoResponse {
+    match Paragraph::get_parsed(id, &state.db) {
+        Ok(p) => Ok((StatusCode::OK, Html(p.to_string()))),
+        Err(_) => Err((StatusCode::BAD_REQUEST, Html("not found".to_string()))),
+    }
+}
+
 async fn paragraph_delete(
     Path(id): Path<i64>,
     State(state): State<Arc<SharedState>>,

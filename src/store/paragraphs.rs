@@ -68,6 +68,18 @@ impl Paragraph {
         }
         Ok(paragraphs)
     }
+
+    pub fn get_parsed(id: i64, con: &rusqlite::Connection) -> Result<String, rusqlite::Error> {
+        let mut stmt = con.prepare("SELECT content FROM paragraph WHERE id = ?")?;
+        let mut rows = stmt.query(&[&id])?;
+        match rows.next()? {
+            Some(row) => {
+                let content: String = row.get(0)?;
+                Ok(markdown::to_html(&content))
+            }
+            None => Err(rusqlite::Error::QueryReturnedNoRows),
+        }
+    }
 }
 
 impl SchemaUp for Paragraph {
