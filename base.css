@@ -79,10 +79,14 @@
 /*}}}*/
 
 /* Markdown CSS {{{*/
-.markdown h1,h2,h3,h4,h5,h6,p,span,ul,ol{
+.markdown h1,h2,h3,h4,h5,a,h6,p,span,ul,ol{
 	@apply text-white;
 	@apply text-xl;
 	@apply my-3;
+}
+.markdown a{
+	@apply underline;
+	@apply text-blue-100;
 }
 .markdown h1{
 	@apply text-6xl;

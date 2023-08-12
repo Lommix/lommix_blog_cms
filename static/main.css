@@ -52,12 +52,25 @@
   margin-bottom: 0.75rem;
 }
 
+.my-10 {
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
 .mt-1 {
   margin-top: 0.25rem;
 }
 
 .mt-3 {
   margin-top: 0.75rem;
+}
+
+.mt-8 {
+  margin-top: 2rem;
+}
+
+.mt-10 {
+  margin-top: 2.5rem;
 }
 
 .block {
@@ -1014,13 +1027,19 @@ video {
 
 /* Markdown CSS {{{*/
 
-.markdown h1,h2,h3,h4,h5,h6,p,span,ul,ol {
+.markdown h1,h2,h3,h4,h5,a,h6,p,span,ul,ol {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
   font-size: 1.25rem;
   line-height: 1.75rem;
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
+}
+
+.markdown a {
+  text-decoration-line: underline;
+  --tw-text-opacity: 1;
+  color: rgb(219 234 254 / var(--tw-text-opacity));
 }
 
 .markdown h1 {
