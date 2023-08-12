@@ -5,6 +5,16 @@
 <div class="bg-slate-600 p-4">
 	<h1>{{article.title}}</h1>
 	<p>{{article.description}}</p>
+
+	<form hx-put="/api/article/{{article.id}}" hx-swap="none">
+		<input class="w-full" type="hidden" name="id" value="{{article.id}}" />
+		<input class="w-full" type="text" name="title" value="{{article.title}}" />
+		<input class="w-full" type="text" name="teaser" value="{{article.teaser}}" />
+		<input class="w-full" type="text" name="description" value="{{article.description}}" />
+		<input class="w-full" type="checkbox" name="published" value="true" {% if article.published %} checked {% endif
+			%} />
+		<input class="w-full" type="submit" value="save" />
+	</form>
 </div>
 
 <div id="paragraphs">
@@ -16,8 +26,9 @@
 </div>
 
 
-<button class="bg-slate-600 p-4 rounded-sm" onclick="slide_down('addForm', 400)"> Add
-</button>
+<div class="w-full justify-center flex my-3">
+	<button class="bg-slate-600 px-2 rounded-sm text-white" onclick="slide_down('addForm', 400)">+</button>
+</div>
 
 <div id="addForm" class="w-full block relative ease-in transform transition-all duration-200 h-0 overflow-hidden">
 	<div class="bg-slate-400 p-4 absolute w-full text-xl">
@@ -35,4 +46,9 @@
 	</div>
 </div>
 
+{% endblock %}
+
+
+{% block js %}
+<script src="/static/highlight.min.js"></script>
 {% endblock %}

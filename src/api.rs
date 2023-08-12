@@ -19,7 +19,7 @@ macro_rules! is_admin {
         if !$state.is_admin() {
             return Err((
                 StatusCode::NETWORK_AUTHENTICATION_REQUIRED,
-                Html("not authorized".to_string()),
+                "not authorized",
             ));
         }
     };
@@ -70,10 +70,7 @@ async fn article_delete(
     is_admin!(auth);
     match Article::delete(id, &state.db) {
         Ok(_) => Ok((StatusCode::OK, Html("deleted".to_string()))),
-        Err(e) => Err((
-            StatusCode::BAD_REQUEST,
-            Html("failed to delete".to_string()),
-        )),
+        Err(e) => Err((StatusCode::BAD_REQUEST, "failed to delete")),
     }
 }
 
@@ -91,23 +88,23 @@ pub struct ArticleForm {
 }
 
 pub async fn article_create(
+    auth: Auth,
     State(state): State<Arc<SharedState>>,
     Form(form): Form<ArticleForm>,
 ) -> impl IntoResponse {
+    is_admin!(auth);
     let mut article = Article::new(form.title);
     match article.insert(&state.db) {
         Ok(_) => Ok((StatusCode::CREATED, Html("created".to_string()))),
-        Err(e) => Err((
-            StatusCode::BAD_REQUEST,
-            Html("failed to create".to_string()),
-        )),
+        Err(e) => Err((StatusCode::BAD_REQUEST, "failed to create")),
     }
 }
 
 async fn article_update(
+    auth: Auth,
     Path(id): Path<i64>,
     State(state): State<Arc<SharedState>>,
-    auth: Auth,
+    Form(form): Form<ArticleForm>,
 ) -> impl IntoResponse {
     is_admin!(auth);
     Ok(Html("blog_update".to_string()))
@@ -133,17 +130,20 @@ struct ParagraphForm {
 }
 
 async fn paragraph_update(
+    auth: Auth,
     State(state): State<Arc<SharedState>>,
     Form(form): Form<ParagraphForm>,
 ) -> impl IntoResponse {
+    is_admin!(auth);
+
     let id = match form.id {
         Some(id) => id,
-        None => return Err((StatusCode::BAD_REQUEST, "missing id".to_string())),
+        None => return Err((StatusCode::BAD_REQUEST, "missing id")),
     };
 
     let mut paragraph = match Paragraph::find(id, &state.db) {
         Ok(p) => p,
-        Err(_) => return Err((StatusCode::BAD_REQUEST, "not found".to_string())),
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "not found")),
     };
 
     paragraph.content = form.content;
@@ -151,14 +151,17 @@ async fn paragraph_update(
 
     match paragraph.update(&state.db) {
         Ok(_) => Ok((StatusCode::OK, Html("updated".to_string()))),
-        Err(_) => Err((StatusCode::BAD_REQUEST, "failed to update".to_string())),
+        Err(_) => Err((StatusCode::BAD_REQUEST, "failed to update")),
     }
 }
 
 async fn paragraph_create(
+    auth: Auth,
     State(state): State<Arc<SharedState>>,
     Form(form): Form<ParagraphForm>,
 ) -> impl IntoResponse {
+    is_admin!(auth);
+
     let paragraph = Paragraph {
         id: form.id,
         article_id: form.article_id,
@@ -172,10 +175,7 @@ async fn paragraph_create(
 
     match paragraph {
         Ok(p) => Ok((StatusCode::CREATED, Html("created".to_string()))),
-        Err(_) => Err((
-            StatusCode::BAD_REQUEST,
-            Html("failed to create".to_string()),
-        )),
+        Err(_) => Err((StatusCode::BAD_REQUEST, "failed to create")),
     }
 }
 
@@ -197,10 +197,7 @@ async fn paragraph_delete(
     is_admin!(auth);
     match Paragraph::delete(id, &state.db) {
         Ok(_) => Ok((StatusCode::OK, Html("deleted".to_string()))),
-        Err(e) => Err((
-            StatusCode::BAD_REQUEST,
-            Html("failed to delete".to_string()),
-        )),
+        Err(e) => Err((StatusCode::BAD_REQUEST, "failed to delete")),
     }
 }
 // ------------------------------------------------------
@@ -211,12 +208,7 @@ async fn file_list(auth: Auth) -> impl IntoResponse {
 
     let file_list = match crate::util::Util::load_files_rec("static/media".into()) {
         Ok(file_list) => file_list,
-        Err(_) => {
-            return Err((
-                StatusCode::BAD_REQUEST,
-                Html("failed to delete".to_string()),
-            ))
-        }
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "failed to delete")),
     };
 
     let file_string = file_list

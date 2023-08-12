@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use axum::{
     async_trait,
-    extract::FromRequest,
-    http::{self, Request},
+    extract::{FromRequest, FromRequestParts},
+    http::{self, request::Parts, Request},
 };
 use serde::{Deserialize, Serialize};
 
@@ -14,22 +14,25 @@ pub struct Auth {
     pub user_state: UserState,
 }
 
-impl Auth{
+impl Auth {
     pub fn is_admin(&self) -> bool {
         self.user_state == UserState::Admin
     }
 }
 
 #[async_trait]
-impl<B> FromRequest<Arc<SharedState>, B> for Auth
-where
-    B: Send + 'static,
-{
+impl FromRequestParts<Arc<SharedState>> for Auth {
     type Rejection = http::StatusCode;
-    async fn from_request(req: Request<B>, state: &Arc<SharedState>) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &Arc<SharedState>,
+    ) -> Result<Self, Self::Rejection> {
+
+        let cookies = parts.headers.get(http::header::COOKIE);
+        println!("cookies: {:?}", cookies);
         // do something later
         Ok(Auth {
-            user_state: UserState::Admin,
+            user_state: UserState::User,
         })
     }
 }

@@ -1,29 +1,28 @@
-<div id="para-{{paragraph.id}}" class="py-4 w-full mt-3 text-white text-xl border-t-2">
+<div id="para-{{paragraph.id}}" class="py-4 w-full mt-3 text-white text-xl">
 	<h1>{{paragraph.title}}</h1>
 
 
-	<div id="markdown" class="text-white [&>p]:text-2xl [&>*]:my-3 [&>h1]:text-6xl [&>h2]:text-5xl [&>h3]:text-4xl [&>h4]:text-3xl [&>h5]:text-2xl
-        [&>pre]:p-2 [&>pre]:w-full [&>pre]:bg-slate-600 [&>ul]:list-disc [&>ul]:ml-8"
+	<div id="markdown"
+		class="markdown"
 		hx-get="/api/paragraph/parsed/{{paragraph.id}}"
-		hx-trigger="load, submit from:#form-{{paragraph.id}} delay:0.3s">
+		hx-trigger="load, submit from:#form-{{paragraph.id}} delay:0.3s"
+		hx-on="htmx:load: hljs.highlightAll()">
 		loading ...
 	</div>
 
-
 	{% if auth.user_state == "Admin" %}
 
-
 	<div class="group relative w-full flex flex-col">
-		<div class="w-full absolute h-8 w-8 border-l border-b bottom-0 -left-12 text-center text-red-300">
+		<div class="absolute h-8 w-8 border-l border-b bottom-0 -left-12 text-center text-red-300">
 			?
 		</div>
 		<div class="flex-col hidden group-hover:flex absolute -left-24 bottom-0 text-slate-800">
 			<button hx-delete="/api/paragraph/{{ paragraph.id }}" class="p-1 w-24 bg-red-200" hx-confirm="delete this?"
 				hx-target="#para-{{paragraph.id}}" hx-swap="delete">
-				delete
+				Delete
 			</button>
-			<button class="bg-green-200 p-1 rounded-sm w-24 mt-1"
-				onclick="slide_down('edit-{{paragraph.id}}', 400)">edit</button>
+			<button class="bg-green-200 p-1 rounded-sm w-24 mt-1 block"
+				onclick="slide_down('edit-{{paragraph.id}}', 500)">Edit</button>
 		</div>
 	</div>
 
@@ -33,12 +32,11 @@
 			<form id="form-{{paragraph.id}}" hx-put="/api/paragraph/{{ paragraph.id }}" hx-swap="none">
 				<input type="hidden" name="id" value="{{paragraph.id}}" />
 				<input type="hidden" name="article_id" value="{{paragraph.article_id}}" />
-				<textarea class="w-full p-1 text-lg h-64 overflow-scroll resize-none mt-1" type="text"
+				<textarea class="leading-4 w-full p-1 text-lg h-96 overflow-scroll resize-none mt-1" type="text"
 					name="content">{{paragraph.content}}</textarea>
 				<select name="paragraph_type" class="w-full p-1" value="{{paragraph.paragraph_type}}">
 					<option>Markdown</option>
-					<option>Video</option>
-					<option>Wasm</option>
+					<option>Html</option>
 				</select>
 				<input class="bg-green-600 hover:bg-green-500 rounded-sm px-2 py-1 block mt-1 font-bold text-white"
 					type="submit" value="save" />

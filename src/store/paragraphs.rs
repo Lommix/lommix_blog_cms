@@ -9,17 +9,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize)]
 pub enum ParagraphType {
     Markdown,
-    Video,
-    Wasm,
+    Html,
 }
 
 impl FromSql for ParagraphType {
     fn column_result(value: rusqlite::types::ValueRef) -> rusqlite::types::FromSqlResult<Self> {
         match value.as_str()? {
             "markdown" => Ok(ParagraphType::Markdown),
-            "video" => Ok(ParagraphType::Video),
-            "wasm" => Ok(ParagraphType::Wasm),
-            _ => Ok(ParagraphType::Markdown),
+            "html" => Ok(ParagraphType::Html),
+            _ => Ok(ParagraphType::Html),
         }
     }
 }
@@ -28,8 +26,7 @@ impl ToSql for ParagraphType {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         match self {
             ParagraphType::Markdown => Ok("markdown".into()),
-            ParagraphType::Video => Ok("video".into()),
-            ParagraphType::Wasm => Ok("wasm".into()),
+            ParagraphType::Html => Ok("html".into()),
         }
     }
 }
@@ -70,14 +67,10 @@ impl Paragraph {
     }
 
     pub fn get_parsed(id: i64, con: &rusqlite::Connection) -> Result<String, rusqlite::Error> {
-        let mut stmt = con.prepare("SELECT content FROM paragraph WHERE id = ?")?;
-        let mut rows = stmt.query(&[&id])?;
-        match rows.next()? {
-            Some(row) => {
-                let content: String = row.get(0)?;
-                Ok(markdown::to_html(&content))
-            }
-            None => Err(rusqlite::Error::QueryReturnedNoRows),
+        let paragraph = Paragraph::find(id, con)?;
+        match paragraph.paragraph_type {
+            ParagraphType::Markdown => Ok(markdown::to_html(&paragraph.content)),
+            _ => Ok(paragraph.content.clone()),
         }
     }
 }
