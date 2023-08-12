@@ -14,7 +14,7 @@ use axum::Router;
 use minijinja::context;
 use std::sync::Arc;
 
-macro_rules! is_admin {
+macro_rules! require_admin {
     ($state:expr) => {
         if !$state.is_admin() {
             return Err((
@@ -47,19 +47,33 @@ pub fn api_routes() -> Router<Arc<SharedState>, axum::body::Body> {
 // articles
 // ------------------------------------------------------
 pub async fn article_list(State(state): State<Arc<SharedState>>, auth: Auth) -> impl IntoResponse {
-    let articles = Article::find_all(&state.db).expect("failed to find all articles");
-    let tmpl = state
+    let mut articles = match Article::find_all(&state.db) {
+        Ok(articles) => articles,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "failed to find articles")),
+    };
+
+    let tmpl = match state
         .templates
         .get_template("components/article_preview_box.html")
-        .unwrap();
+    {
+        Ok(tmpl) => tmpl,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "missing template")),
+    };
 
-    Html(
+    if !auth.is_admin() {
+        articles = articles
+            .drain(..)
+            .filter(|a| a.published)
+            .collect::<Vec<_>>();
+    }
+
+    Ok(Html(
         tmpl.render(context! {
             articles => articles,
             auth => auth
         })
         .unwrap(),
-    )
+    ))
 }
 
 async fn article_delete(
@@ -67,7 +81,7 @@ async fn article_delete(
     State(state): State<Arc<SharedState>>,
     auth: Auth,
 ) -> impl IntoResponse {
-    is_admin!(auth);
+    require_admin!(auth);
     match Article::delete(id, &state.db) {
         Ok(_) => Ok((StatusCode::OK, Html("deleted".to_string()))),
         Err(e) => Err((StatusCode::BAD_REQUEST, "failed to delete")),
@@ -85,6 +99,9 @@ async fn article_get(
 #[derive(serde::Deserialize)]
 pub struct ArticleForm {
     title: String,
+    teaser: Option<String>,
+    cover: Option<String>,
+    published: bool,
 }
 
 pub async fn article_create(
@@ -92,7 +109,7 @@ pub async fn article_create(
     State(state): State<Arc<SharedState>>,
     Form(form): Form<ArticleForm>,
 ) -> impl IntoResponse {
-    is_admin!(auth);
+    require_admin!(auth);
     let mut article = Article::new(form.title);
     match article.insert(&state.db) {
         Ok(_) => Ok((StatusCode::CREATED, Html("created".to_string()))),
@@ -106,8 +123,42 @@ async fn article_update(
     State(state): State<Arc<SharedState>>,
     Form(form): Form<ArticleForm>,
 ) -> impl IntoResponse {
-    is_admin!(auth);
-    Ok(Html("blog_update".to_string()))
+    require_admin!(auth);
+
+    let mut article = match Article::find(id, &state.db) {
+        Ok(a) => a,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "not found")),
+    };
+
+    article.title = form.title;
+    article.teaser = form.teaser.unwrap_or("".to_string());
+    article.cover = form.cover.unwrap_or("".to_string());
+    article.published = form.published;
+
+    let tmpl = match state
+        .templates
+        .get_template("components/article_header.html")
+    {
+        Ok(t) => t,
+        Err(_) => return Err((StatusCode::INTERNAL_SERVER_ERROR, "failed to get template")),
+    };
+
+    let html = match tmpl.render(context! {
+        article => article
+    }) {
+        Ok(h) => h,
+        Err(_) => {
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "failed to render template",
+            ))
+        }
+    };
+
+    match article.update(&state.db) {
+        Ok(_) => Ok((StatusCode::OK, Html(html))),
+        Err(_) => Err((StatusCode::BAD_REQUEST, "failed to update")),
+    }
 }
 
 // ------------------------------------------------------
@@ -134,7 +185,7 @@ async fn paragraph_update(
     State(state): State<Arc<SharedState>>,
     Form(form): Form<ParagraphForm>,
 ) -> impl IntoResponse {
-    is_admin!(auth);
+    require_admin!(auth);
 
     let id = match form.id {
         Some(id) => id,
@@ -160,7 +211,7 @@ async fn paragraph_create(
     State(state): State<Arc<SharedState>>,
     Form(form): Form<ParagraphForm>,
 ) -> impl IntoResponse {
-    is_admin!(auth);
+    require_admin!(auth);
 
     let paragraph = Paragraph {
         id: form.id,
@@ -194,7 +245,7 @@ async fn paragraph_delete(
     State(state): State<Arc<SharedState>>,
     auth: Auth,
 ) -> impl IntoResponse {
-    is_admin!(auth);
+    require_admin!(auth);
     match Paragraph::delete(id, &state.db) {
         Ok(_) => Ok((StatusCode::OK, Html("deleted".to_string()))),
         Err(e) => Err((StatusCode::BAD_REQUEST, "failed to delete")),
@@ -204,7 +255,7 @@ async fn paragraph_delete(
 // files
 // ------------------------------------------------------
 async fn file_list(auth: Auth) -> impl IntoResponse {
-    is_admin!(auth);
+    require_admin!(auth);
 
     let file_list = match crate::util::Util::load_files_rec("static/media".into()) {
         Ok(file_list) => file_list,
@@ -222,7 +273,7 @@ async fn file_list(auth: Auth) -> impl IntoResponse {
 }
 
 async fn file_upload(auth: Auth) -> impl IntoResponse {
-    is_admin!(auth);
+    require_admin!(auth);
 
     Ok(Html("file_upload".to_string()))
 }

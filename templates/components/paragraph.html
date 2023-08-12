@@ -1,48 +1,46 @@
 <div id="para-{{paragraph.id}}" class="py-4 w-full mt-3 text-white text-xl">
-	<h1>{{paragraph.title}}</h1>
-
-
-	<div id="markdown"
-		class="markdown"
-		hx-get="/api/paragraph/parsed/{{paragraph.id}}"
-		hx-trigger="load, submit from:#form-{{paragraph.id}} delay:0.3s"
-		hx-on="htmx:load: hljs.highlightAll()">
-		loading ...
-	</div>
-
 	{% if auth.user_state == "Admin" %}
-
-	<div class="group relative w-full flex flex-col">
-		<div class="absolute h-8 w-8 border-l border-b bottom-0 -left-12 text-center text-red-300">
+	<div class="group relative w-full">
+		<button class="text-sm text-black absolute top-0 right-0 w-fit px-2 bg-green-600"
+			onclick="slide_down('edit-{{paragraph.id}}', 420)">
 			?
-		</div>
-		<div class="flex-col hidden group-hover:flex absolute -left-24 bottom-0 text-slate-800">
-			<button hx-delete="/api/paragraph/{{ paragraph.id }}" class="p-1 w-24 bg-red-200" hx-confirm="delete this?"
-				hx-target="#para-{{paragraph.id}}" hx-swap="delete">
-				Delete
-			</button>
-			<button class="bg-green-200 p-1 rounded-sm w-24 mt-1 block"
-				onclick="slide_down('edit-{{paragraph.id}}', 500)">Edit</button>
-		</div>
+		</button>
 	</div>
 
 	<div id="edit-{{paragraph.id}}"
 		class="w-full block relative ease-in transform transition-all duration-200 h-0 overflow-hidden text-slate-800">
-		<div class="bg-slate-400 p-4 absolute w-full text-xl">
+		<div class="bg-slate-400 p-4 absolute w-full text-xl pt-6 h-[420px]">
 			<form id="form-{{paragraph.id}}" hx-put="/api/paragraph/{{ paragraph.id }}" hx-swap="none">
 				<input type="hidden" name="id" value="{{paragraph.id}}" />
 				<input type="hidden" name="article_id" value="{{paragraph.article_id}}" />
-				<textarea class="leading-4 w-full p-1 text-lg h-96 overflow-scroll resize-none mt-1" type="text"
+				<textarea class="leading-4 w-full p-1 text-lg h-72 overflow-scroll resize-none mt-1" type="text"
 					name="content">{{paragraph.content}}</textarea>
 				<select name="paragraph_type" class="w-full p-1" value="{{paragraph.paragraph_type}}">
 					<option>Markdown</option>
 					<option>Html</option>
 				</select>
-				<input class="bg-green-600 hover:bg-green-500 rounded-sm px-2 py-1 block mt-1 font-bold text-white"
+				<input class="absolute bottom-4 left-4 bg-green-600 hover:bg-green-500 rounded-sm px-2 py-1 block mt-1 "
 					type="submit" value="save" />
 			</form>
+
+			<button class="p-1 z-10 w-24 bg-red-400 hover:bg-red-300 absolute right-4 bottom-4 rounded-sm"
+				hx-delete="/api/paragraph/{{ paragraph.id }}" hx-confirm="delete this?"
+				hx-target="#para-{{paragraph.id}}" hx-swap="delete">
+				Delete
+			</button>
+
+			<button class="text-sm text-black absolute top-0 right-0 w-fit px-2 bg-red-400 hover:bg-red-300"
+				onclick="slide_down('edit-{{paragraph.id}}', 400)">
+				x
+			</button>
 		</div>
 	</div>
-
 	{% endif %}
+
+
+	<div class="markdown transition-all" hx-get="/api/paragraph/parsed/{{paragraph.id}}"
+		hx-trigger="load, submit from:#form-{{paragraph.id}} delay:0.3s" hx-on="htmx:load: hljs.highlightAll()">
+		{{paragraph.content}}
+	</div>
+
 </div>

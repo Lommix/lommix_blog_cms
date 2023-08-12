@@ -32,7 +32,7 @@ impl FromRequestParts<Arc<SharedState>> for Auth {
         println!("cookies: {:?}", cookies);
         // do something later
         Ok(Auth {
-            user_state: UserState::User,
+            user_state: UserState::Admin,
         })
     }
 }

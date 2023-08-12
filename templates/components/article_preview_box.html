@@ -1,11 +1,28 @@
 {% for article in articles %}
 
-<div id="preview-{{article.id}}" class="text-black h-64 relative text-xl font-bold rounded-lg my-3 px-2 bg-slate-700">
-
-	<div class="w-full">
-		<a href="/article/{{ article.id }}"> {{ article.title }} </a>
-		{{ article.description }}
-		{{ article.teaser }}
+<hr>
+<div id="preview-{{article.id}}"
+	class="text-black relative text-xl font-bold rounded-lg my-6 px-2">
+	<div class="w-full h-full flex-row flex space-x-2">
+		<div class="w-full h-full flex justify-center ">
+			<a class="h-fit max-h-96 overflow-hidden" href="/article/{{ article.id }}">
+				{% if article.cover %}
+				<img src="{{article.cover}}" alt="Banner" />
+				{% else %}
+				<img src="https://via.placeholder.com/400" alt="Banner" />
+				{% endif %}
+			</a>
+		</div>
+		<div class="w-full">
+			<h1 class="text-white mt-6 text-3xl">
+				<a href="/article/{{ article.id }}"> {{ article.title }} </a>
+			</h1>
+			<hr>
+			<span class="text-sm">{{ article.updated_at|date }}</span>
+			<p>
+				{{ article.teaser }}
+			</p>
+		</div>
 	</div>
 
 	{% if auth.user_state == "Admin" %}

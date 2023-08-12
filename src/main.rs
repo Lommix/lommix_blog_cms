@@ -9,7 +9,7 @@ use axum::{
     Json, Router,
 };
 use clap::{Args, Parser};
-use minijinja::context;
+use minijinja::{context, value::Value};
 use serde::{Deserialize, Serialize};
 use std::{
     default,
@@ -183,9 +183,16 @@ fn load_templates() -> minijinja::Environment<'static> {
 
         println!("loaded template: {} line: {}", file_name, name);
 
+        env.add_filter("date", date_format);
         env.add_template_owned(name, template)
             .expect("error loading template");
     });
 
     env
+}
+
+fn date_format(state: &minijinja::State, value: i64) -> String {
+    let time = chrono::NaiveDateTime::from_timestamp(value, 0);
+    let out = time.format("%d. %B %Y").to_string();
+    format!("{}", &out)
 }

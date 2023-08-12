@@ -1,21 +1,53 @@
 {% extends 'components/layout.html' %}
 
 {% block content %}
+{% if auth.user_state == "Admin" %}
+<button class="absolute top-0 right-0 w-fit px-3 bg-green-600" onclick="slide_down('edit-dropdown', 224)">
+	edit
+</button>
+<div id="edit-dropdown"
+	class="bg-slate-600 relative ease-in transform transition-all duration-200 overflow-hidden w-full h-0">
+	<form class="absolute top-0 left-0 p-2 w-full h-44" hx-put="/api/article/{{article.id}}"
+		hx-target="#article-header">
+		<fieldset id="published-input" class="w-full flex flex-row space-x-2 my-2">
+			<label for="published">Published:</label>
+			<input class="bg-green-500 text-green-500 border-green-500 border-4" type="radio" name="published"
+				value="true" {% if article.published %} checked {% endif %} />
+			<label for="published">Private:</label>
+			<input class="bg-red-500 text-red-500 border-red-500 border-4" type="radio" name="published" value="false"
+				{% if not article.published %} checked {% endif %} />
+		</fieldset>
 
-<div class="bg-slate-600 p-4">
-	<h1>{{article.title}}</h1>
-	<p>{{article.description}}</p>
+		<div class="w-full flex flex-row space-x-2 h-full">
+			<div class="w-full">
+				<textarea class="w-full h-full resize-none my-1 overflow-scroll" type="text"
+					name="teaser">{{article.teaser}}</textarea>
+			</div>
+			<div class="w-full">
+				<input id="title" placeholder="Title" class="w-full my-1" type="text" name="title"
+					value="{{article.title}}" />
+				<input id="cover" placeholder="Cover" class="w-full my-1" type="text" name="cover"
+					value="{{article.cover}}" />
+				<input class="w-full bg-slate-300 px-4 py-2 rounded-md" type="submit" value="save" />
+			</div>
+		</div>
 
-	<form hx-put="/api/article/{{article.id}}" hx-swap="none">
-		<input class="w-full" type="hidden" name="id" value="{{article.id}}" />
-		<input class="w-full" type="text" name="title" value="{{article.title}}" />
-		<input class="w-full" type="text" name="teaser" value="{{article.teaser}}" />
-		<input class="w-full" type="text" name="description" value="{{article.description}}" />
-		<input class="w-full" type="checkbox" name="published" value="true" {% if article.published %} checked {% endif
-			%} />
-		<input class="w-full" type="submit" value="save" />
 	</form>
+
+	<button class="absolute top-0 right-0 w-fit px-3 bg-red-600" onclick="slide_down('edit-dropdown', 0)">
+		close
+	</button>
+
 </div>
+{% endif %}
+
+<div id="article-header" class="w-full my-3 markdown">
+	{% with article=article %}
+	{% include 'components/article_header.html' %}
+	{% endwith %}
+</div>
+
+
 
 <div id="paragraphs">
 	{% for paragraph in article.paragraphs %}
@@ -25,6 +57,7 @@
 	{% endfor %}
 </div>
 
+{% if auth.user_state == "Admin" %}
 
 <div class="w-full justify-center flex my-3">
 	<button class="bg-slate-600 px-2 rounded-sm text-white" onclick="slide_down('addForm', 400)">+</button>
@@ -37,8 +70,7 @@
 			<textarea class="w-full h-64 overflow-scroll resize-none" type="text" name="content"></textarea>
 			<select name="paragraph_type" class="w-full">
 				<option>Markdown</option>
-				<option>Video</option>
-				<option>Wasm</option>
+				<option>Html</option>
 			</select>
 			<input class="bg-green-600 hover:bg-green-500 rounded-sm px-2 py-1 block mt-3 font-bold text-white"
 				type="submit" value="Create" />
@@ -46,6 +78,7 @@
 	</div>
 </div>
 
+{% endif %}
 {% endblock %}
 
 

@@ -70,11 +70,15 @@ async fn get_article_detail(
     State(state): State<Arc<SharedState>>,
     auth: Auth,
 ) -> impl IntoResponse {
+
     let article = match Article::find(id, &state.db) {
         Ok(article) => article,
         Err(_) => return Err((StatusCode::NOT_FOUND, "not found".to_string())),
     };
 
+    if (!article.published && !auth.is_admin()) {
+        return Err((StatusCode::NOT_FOUND, "not found".to_string()));
+    }
     let tmpl = match state.templates.get_template("pages/article.html") {
         Ok(tmpl) => tmpl,
         Err(_) => return Err((StatusCode::BAD_REQUEST, "missing template".to_string())),

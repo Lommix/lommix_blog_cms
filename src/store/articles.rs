@@ -15,7 +15,7 @@ pub struct Article {
     pub id: Option<i64>,
     pub title: String,
     pub teaser: String,
-    pub description: String,
+    pub cover: String,
     pub created_at: i64,
     pub updated_at: i64,
     pub published: bool,
@@ -29,7 +29,7 @@ impl Article {
             id: None,
             title,
             teaser: "".to_string(),
-            description: "".to_string(),
+            cover: "".to_string(),
             created_at: now.clone(),
             updated_at: now,
             published: false,
@@ -45,7 +45,7 @@ impl SchemaUp for Article {
 id INTEGER PRIMARY KEY,
 title TEXT,
 teaser TEXT,
-description TEXT,
+cover TEXT,
 created_at INTEGER,
 updated_at INTEGER,
 published BOOLEAN
@@ -60,7 +60,7 @@ impl Crud for Article {
     fn find_all(con: &rusqlite::Connection) -> Result<Vec<Self>, rusqlite::Error> {
         let mut articles = Vec::new();
         let mut stmt = con.prepare(
-            "SELECT id, title, teaser, description, created_at, updated_at, published FROM article ORDER BY created_at DESC",
+            "SELECT id, title, teaser, cover, created_at, updated_at, published FROM article ORDER BY created_at DESC",
         )?;
         let mut rows = stmt.query([])?;
         while let Some(row) = rows.next()? {
@@ -68,7 +68,7 @@ impl Crud for Article {
                 id: row.get(0)?,
                 title: row.get(1)?,
                 teaser: row.get(2)?,
-                description: row.get(3)?,
+                cover: row.get(3)?,
                 created_at: row.get(4)?,
                 updated_at: row.get(5)?,
                 published: row.get(6)?,
@@ -80,13 +80,13 @@ impl Crud for Article {
     }
     fn insert(&mut self, con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
         let mut stmt = con.prepare(
-            "INSERT INTO article (title, teaser, description, created_at, updated_at, published) VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO article (title, teaser, cover, created_at, updated_at, published) VALUES (?, ?, ?, ?, ?, ?)",
         )?;
 
         stmt.execute(params![
             &self.title,
             &self.teaser,
-            &self.description,
+            &self.cover,
             &self.created_at,
             &self.updated_at,
             &self.published,
@@ -98,7 +98,7 @@ impl Crud for Article {
     }
     fn find(id: i64, con: &rusqlite::Connection) -> Result<Self, rusqlite::Error> {
         let mut stmt = con.prepare(
-            "SELECT id, title, teaser, description, created_at, updated_at, published FROM article WHERE id = ?"
+            "SELECT id, title, teaser, cover, created_at, updated_at, published FROM article WHERE id = ?"
         )?;
         let mut rows = stmt.query(&[&id])?;
         match rows.next()? {
@@ -106,7 +106,7 @@ impl Crud for Article {
                 id: row.get(0)?,
                 title: row.get(1)?,
                 teaser: row.get(2)?,
-                description: row.get(3)?,
+                cover: row.get(3)?,
                 created_at: row.get(4)?,
                 updated_at: row.get(5)?,
                 published: row.get(6)?,
@@ -119,13 +119,13 @@ impl Crud for Article {
 
     fn update(&self, con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
         let mut stmt = con.prepare(
-            "UPDATE article SET title = ?, teaser = ?, description = ?, created_at = ?, updated_at = ?, published = ? WHERE id = ?",
+            "UPDATE article SET title = ?, teaser = ?, cover = ?, created_at = ?, updated_at = ?, published = ? WHERE id = ?",
         )?;
 
         stmt.execute(params![
             &self.title,
             &self.teaser,
-            &self.description,
+            &self.cover,
             &self.created_at,
             &self.updated_at,
             &self.published,
