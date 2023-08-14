@@ -1,12 +1,12 @@
 {% for article in articles %}
 
 <div id="preview-{{article.id}}" class="text-black relative text-xl font-bold rounded-lg my-6">
-	<div class="w-full h-full flex-row flex space-x-2">
-		<div class="w-full h-full flex justify-center">
-			<a class="h-fit max-h-96 overflow-hidden {% if not article.published %}grayscale{% endif %}"
+	<div class="w-full h-full flex-col md:flex-row flex space-x-0 space-y-4 md:space-x-4 md:space-y-0">
+		<div class="w-full h-full flex justify-center border-slate-200 rounded-lg border-2 p-2">
+			<a class="overflow-hidden {% if not article.published %}grayscale{% endif %}"
 				href="/article/{{ article.id }}">
 				{% if article.cover %}
-				<img src="{{article.cover}}" alt="Banner" />
+				<img src="{{article.cover}}" alt="Banner" class="max-h-96" />
 				{% else %}
 				<img src="https://via.placeholder.com/400" alt="Banner" />
 				{% endif %}
