@@ -2,10 +2,11 @@
 
 {% block content %}
 
+
 {% if auth.user_state == "Admin" %}
 
 <div class="w-ful relative">
-	<button class="bg-green-400 px-2 py-1 rounded-md font-bold text-gray-600 absolute left-0 -top-11"
+	<button class="bg-green-400 px-2 rounded-sm font-bold text-gray-600 absolute left-0 -top-7"
 		onclick="slide_down('dropdown', 55)">
 		+
 	</button>
@@ -21,6 +22,13 @@
 			<input type="hidden" name="teaser" value="" />
 			<input type="hidden" name="cover" value="" />
 		</form>
+	</div>
+</div>
+{% else %}
+<button class="absolute right-0 -top-8" onclick="slide_down('dropdown', 65)">f</button>
+<div id="dropdown" class="w-full relative overflow-hidden ease-in transform transition-all duration-300 h-0">
+	<div class="w-full absolute top-0 left-0">
+		{% include 'components/login.html' %}
 	</div>
 </div>
 {% endif %}

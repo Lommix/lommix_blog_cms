@@ -1,0 +1,9 @@
+<div class="">
+	<div id="login-error" class="text-red-500 h-8 font-bold"></div>
+	</div>
+	<form hx-post="/api/login" class="w-full flex flex-row space-x-3 text-2xl font-bold" hx-target="#login-error">
+		<input class="w-full p-1" placeholder="User" type="text" name="user" placeholder="Title" value="admin" />
+		<input class="w-full p-1" placeholder="Password" type="password" name="password" placeholder="Teaser" value="admin" />
+		<input class="w-full p-1 bg-green-500" type="submit" value="Login" />
+	</form>
+</div>

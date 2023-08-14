@@ -19,6 +19,7 @@ use std::{
     path::PathBuf,
     sync::{Arc, Mutex, RwLock},
 };
+use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
 use crate::store::{articles::Article, paragraphs::Paragraph};
 use dotenv::dotenv;
@@ -37,7 +38,7 @@ const TEMPLATE_EXTENSION: &str = "html";
 // --------------------------------------------------------
 // shared state
 // --------------------------------------------------------
-#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug,Clone, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum UserState {
     #[default]
     Unknown,
@@ -78,6 +79,17 @@ enum Command {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                // axum logs rejections from built-in extractors with the `axum::rejection`
+                // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
+                "example_tracing_aka_logging=debug,tower_http=debug,axum::rejection=trace".into()
+            }),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     let db_path = std::env::var("DATABASE_PATH").expect("DATABASE_PATH must be set");

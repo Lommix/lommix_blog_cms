@@ -1,11 +1,15 @@
 use crate::auth::Auth;
+use crate::auth::AUTH_COOKIE;
 use crate::store::articles::Article;
 use crate::store::paragraphs::Paragraph;
 use crate::store::paragraphs::ParagraphType;
+use crate::Session;
+use crate::UserState;
 
 use super::store::*;
 use super::SharedState;
 use axum::extract::{Path, State};
+use axum::http::HeaderMap;
 use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse};
 use axum::routing::{delete, get, post};
@@ -13,6 +17,9 @@ use axum::Form;
 use axum::Router;
 use minijinja::context;
 use std::sync::Arc;
+
+const ADMIN_USER: &str = "ADMIN_USER";
+const ADMIN_PASSWORD: &str = "ADMIN_PASSWORD";
 
 macro_rules! require_admin {
     ($state:expr) => {
@@ -41,6 +48,82 @@ pub fn api_routes() -> Router<Arc<SharedState>, axum::body::Body> {
         )
         .route("/paragraph/parsed/:id", get(paragraph_parsed))
         .route("/file_list", get(file_list))
+        .route("/login", post(login))
+        .route("/logout", get(logout))
+}
+
+// ------------------------------------------------------
+// login
+// ------------------------------------------------------
+
+#[derive(serde::Deserialize)]
+struct LoginForm {
+    user: String,
+    password: String,
+}
+
+async fn login(
+    auth: Auth,
+    State(state): State<Arc<SharedState>>,
+    Form(form): Form<LoginForm>,
+) -> impl IntoResponse {
+    let user = std::env::var(ADMIN_USER).unwrap();
+    let pw = std::env::var(ADMIN_PASSWORD).unwrap();
+
+    if form.user == user && form.password == pw {
+        let cookie_hash = rand::random::<u128>();
+
+        match state.sessions.write() {
+            Ok(mut sessions) => {
+                sessions.push(Session {
+                    id: cookie_hash,
+                    user_state: UserState::Admin,
+                });
+            }
+            Err(_) => {}
+        }
+
+        let mut header = HeaderMap::new();
+
+        header.insert(
+            "set-cookie",
+            format!("{}={}; Path=/", AUTH_COOKIE, cookie_hash)
+                .parse()
+                .unwrap(),
+        );
+        header.insert("HX-Refresh", "true".parse().unwrap());
+
+        return Ok((header, Html("success".to_string())));
+    }
+    Err((StatusCode::OK, "failed to login, fail again and are banned"))
+}
+
+// ------------------------------------------------------
+// logout
+// ------------------------------------------------------
+async fn logout(auth: Auth, State(state): State<Arc<SharedState>>) -> impl IntoResponse {
+    require_admin!(auth);
+
+    match state.sessions.write() {
+        Ok(mut sessions) => {
+            sessions.retain(|s| s.id != auth.id.unwrap());
+        }
+        Err(_) => {}
+    }
+
+    let mut header = HeaderMap::new();
+    header.insert(
+        "set-cookie",
+        format!(
+            "{}=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/",
+            AUTH_COOKIE
+        )
+        .parse()
+        .unwrap(),
+    );
+    header.insert("HX-Redirect", "/".parse().unwrap());
+
+    Ok((header, Html("success".to_string())))
 }
 
 // ------------------------------------------------------

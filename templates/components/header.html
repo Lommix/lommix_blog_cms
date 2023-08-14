@@ -1,6 +1,12 @@
 <div class="relative rounded-lg overflow-hidden">
+
 	<img src="/static/images/banner.jpg" alt="Banner" />
 	<div class="absolute w-full h-full top-0 left-0 justify-end flex">
+
+		{% if auth.user_state == "Admin" %}
+		<a class="cursor-pointer absolute top-0 right-0 p-1 bg-white rounded-bl-lg" hx-get="/api/logout">Logout</a>
+		{% endif %}
+
 		<a href="/" class="w-full"></a>
 		<div class="flex flex-col w-full">
 			<div class="w-full h-full flex items-end justify-center">

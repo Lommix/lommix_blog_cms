@@ -1,6 +1,11 @@
 {% extends 'components/layout.html' %}
 
+{% block head %}
+<title>Lommix - {{article.title}}</title>
+{% endblock %}
+
 {% block content %}
+
 {% if auth.user_state == "Admin" %}
 <button class="absolute top-0 right-0 w-fit px-3 bg-green-600" onclick="slide_down('edit-dropdown', 224)">
 	edit
