@@ -2,12 +2,16 @@
 
 use axum::{
     body::{Body, StreamBody},
-    extract::{Query, State},
+    extract::{Host, Query, State},
+    handler::HandlerWithoutStateExt,
     http::{Request, Response, StatusCode, Uri},
-    response::{Html, IntoResponse},
+    response::{Html, IntoResponse, Redirect},
     routing::{get, post},
-    Json, Router,
+    BoxError, Json, Router, ServiceExt,
 };
+
+use axum_server::tls_rustls::RustlsConfig;
+use chrono::NaiveDateTime;
 use clap::{Args, Parser};
 use minijinja::{context, value::Value};
 use serde::{Deserialize, Serialize};
@@ -35,10 +39,13 @@ const TEMPLATE_DIR: &str = "templates";
 const PAGE_DIR: &str = "pages";
 const TEMPLATE_EXTENSION: &str = "html";
 
+const HTTP_PORT: u16 = 80;
+const HTTPS_PORT: u16 = 443;
+
 // --------------------------------------------------------
 // shared state
 // --------------------------------------------------------
-#[derive(Debug,Clone, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum UserState {
     #[default]
     Unknown,
@@ -70,7 +77,8 @@ unsafe impl Sync for SharedState {}
 #[derive(Parser)]
 enum Command {
     Init,
-    Run,
+    Dev,
+    Prod,
 }
 
 // --------------------------------------------------------
@@ -81,17 +89,10 @@ async fn main() {
     dotenv().ok();
 
     tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                // axum logs rejections from built-in extractors with the `axum::rejection`
-                // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
-                "example_tracing_aka_logging=debug,tower_http=debug,axum::rejection=trace".into()
-            }),
-        )
+        .with(tracing_subscriber::EnvFilter::from_default_env())
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     let db_path = std::env::var("DATABASE_PATH").expect("DATABASE_PATH must be set");
     let db = rusqlite::Connection::open(&db_path).expect("Failed to open database");
 
@@ -108,19 +109,85 @@ async fn main() {
             Article::up(&state.db).unwrap();
             Paragraph::up(&state.db).unwrap();
         }
-        Command::Run => {
-            println!("listening on {}", addr);
-            let app = Router::new()
-                .route("/static/*asset", get(asset_handle))
-                .nest("/", pages::page_routes())
-                .nest("/api", api::api_routes())
-                .with_state(state)
-                .into_make_service();
+        Command::Dev => {
+            let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+            tracing::info!("listening on {}", addr);
+            let app = setup_router(state);
             axum::Server::bind(&addr).serve(app).await.unwrap();
+        }
+        Command::Prod => {
+            let cert_path = std::env::var("SSL_CERT").expect("CERT_PATH must be set");
+            let key_path = std::env::var("SSL_KEY").expect("KEY_PATH must be set");
+
+            let config =
+                RustlsConfig::from_pem_file(PathBuf::from(cert_path), PathBuf::from(key_path))
+                    .await
+                    .expect("failed to load cert");
+
+            let addr = SocketAddr::from(([127, 0, 0, 1], HTTPS_PORT));
+            tracing::info!("listening on {}", addr);
+            let app = setup_router(state);
+
+            tokio::spawn(redirect_http_to_https());
+
+            axum_server::bind_rustls(addr, config)
+                .serve(app)
+                .await
+                .unwrap();
         }
     }
 }
 
+fn setup_router(state: Arc<SharedState>) -> axum::routing::IntoMakeService<Router> {
+    Router::new()
+        .route("/static/*asset", get(asset_handle))
+        .nest("/", pages::page_routes())
+        .nest("/api", api::api_routes())
+        .with_state(state)
+        .into_make_service()
+}
+
+async fn redirect_http_to_https() {
+    fn make_https(host: String, uri: Uri) -> Result<Uri, BoxError> {
+        let mut parts = uri.into_parts();
+
+        parts.scheme = Some(axum::http::uri::Scheme::HTTPS);
+
+        if parts.path_and_query.is_none() {
+            parts.path_and_query = Some("/".parse().unwrap());
+        }
+
+        let https_host = host.replace(&HTTP_PORT.to_string(), &HTTPS_PORT.to_string());
+        parts.authority = Some(https_host.parse()?);
+        Ok(Uri::from_parts(parts)?)
+    }
+
+    let redirect = move |Host(host): Host, uri: Uri| async move {
+        match make_https(host, uri) {
+            Ok(uri) => Ok(Redirect::permanent(&uri.to_string())),
+            Err(error) => {
+                tracing::warn!(%error, "failed to convert URI to HTTPS");
+                Err(StatusCode::BAD_REQUEST)
+            }
+        }
+    };
+
+    let addr = SocketAddr::from(([127, 0, 0, 1], HTTP_PORT));
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+
+    tracing::debug!("listening on {}", listener.local_addr().unwrap());
+
+    let router = Router::new()
+        .route_service("/", get(redirect))
+        .route_service("/*any", get(redirect))
+        .into_make_service();
+
+    axum::Server::from_tcp(listener.into_std().unwrap())
+        .unwrap()
+        .serve(router)
+        .await
+        .unwrap();
+}
 // --------------------------------------------------------
 // static file handler
 // lommix.de/static
@@ -204,7 +271,10 @@ fn load_templates() -> minijinja::Environment<'static> {
 }
 
 fn date_format(state: &minijinja::State, value: i64) -> String {
-    let time = chrono::NaiveDateTime::from_timestamp(value, 0);
-    let out = time.format("%d. %B %Y").to_string();
-    format!("{}", &out)
+    let time = match NaiveDateTime::from_timestamp_opt(value, 0) {
+        Some(time) => time.format("%d. %B %Y").to_string(),
+        None => return "".to_string(),
+    };
+
+    format!("{}", &time)
 }

@@ -3,3 +3,5 @@
 /static/images
 .env
 *.db
+cert.pem
+key.pem

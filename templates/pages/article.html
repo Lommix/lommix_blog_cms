@@ -2,6 +2,12 @@
 
 {% block head %}
 <title>Lommix - {{article.title}}</title>
+<meta name="description" content="{{article.teaser}}" />
+<meta name="author" content="Lommix" />
+<meta property="og:title" content="Lommix - {{article.title}}" />
+<meta property="og:description" content="{{article.teaser}}" />
+<meta property="og:type" content="article" />
+<meta property="og:image" content="{{article.cover}}" />
 {% endblock %}
 
 {% block content %}

@@ -712,6 +712,10 @@ video {
   height: 3.5rem;
 }
 
+.h-1 {
+  height: 0.25rem;
+}
+
 .max-h-96 {
   max-height: 24rem;
 }
@@ -739,6 +743,10 @@ video {
 
 .w-60 {
   width: 15rem;
+}
+
+.w-1 {
+  width: 0.25rem;
 }
 
 .max-w-7xl {
@@ -1079,6 +1087,10 @@ video {
   line-height: 1rem;
 }
 
+.leading-6 {
+  line-height: 1.5rem;
+}
+
 .text-black {
   --tw-text-opacity: 1;
   color: rgb(0 0 0 / var(--tw-text-opacity));
@@ -1117,6 +1129,18 @@ video {
 .text-orange-500 {
   --tw-text-opacity: 1;
   color: rgb(249 115 22 / var(--tw-text-opacity));
+}
+
+.underline {
+  text-decoration-line: underline;
+}
+
+.underline-offset-2 {
+  text-underline-offset: 2px;
+}
+
+.underline-offset-4 {
+  text-underline-offset: 4px;
 }
 
 .grayscale {
