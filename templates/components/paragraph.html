@@ -1,7 +1,7 @@
 <div id="para-{{paragraph.id}}" class="py-4 w-full mt-3 text-white text-xl">
 	{% if auth.user_state == "Admin" %}
 	<div class="group relative w-full">
-		<button class="text-sm text-black absolute top-0 right-0 w-fit px-2 bg-green-600"
+		<button class="text-sm text-black absolute top-0 right-0 w-fit px-2 bg-green-600 z-50"
 			onclick="slide_down('edit-{{paragraph.id}}', 420)">
 			?
 		</button>
