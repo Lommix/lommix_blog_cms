@@ -12,19 +12,22 @@
 
 <body class="w-full h-full">
 	<div class="flex justify-center">
-		<div class="wrapper max-w-7xl w-full h-full relative p-4">
+		<div class="wrapper max-w-7xl w-full h-full relative p-4 mb-24">
 			<div class="header">{% include 'components/header.html' %}</div>
 			<div class="content relative h-fit mt-8">{% block content %}{% endblock %}</div>
-			<div class="h-20 block">
-				<div class="footer bg-zinc-700 w-full h-20 fixed bottom-0 left-0">
-					{% include 'components/footer.html' %}
-				</div>
-			</div>
 		</div>
-		<div class="fixed -z-10 w-full h-full bg-gradient-to-t from-slate-800 to-slate-950 h-screen w-screen fixed" />
+
+		<div class="bg-slate-900 z-30 h-14 fixed bottom-0 left-0 w-full">
+			{% include 'components/footer.html' %}
+		</div>
+
 		<script src="/static/htmx.min.js"></script>
 		<script src="/static/main.js"></script>
 	</div>
+
+	<div class="fixed -z-10 block bg-gradient-to-t from-slate-800 to-slate-950 h-screen w-screen top-0 left-0">
+	</div>
+
 	{% block js %}
 	{% endblock %}
 </body>

@@ -347,8 +347,6 @@ async fn file_list(auth: Auth) -> impl IntoResponse {
         Err(_) => return Err((StatusCode::BAD_REQUEST, "failed to delete")),
     };
 
-    dbg!(&file_list);
-
     let file_string = file_list
         .iter()
         .map(|(_, path)| path.to_str().unwrap().to_string())
