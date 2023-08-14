@@ -1,4 +1,5 @@
 /target
+/static/media
 /static/images
 .env
 *.db

@@ -16,6 +16,7 @@ use axum::routing::{delete, get, post};
 use axum::Form;
 use axum::Router;
 use minijinja::context;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 const ADMIN_USER: &str = "ADMIN_USER";
@@ -47,7 +48,8 @@ pub fn api_routes() -> Router<Arc<SharedState>, axum::body::Body> {
                 .put(paragraph_update),
         )
         .route("/paragraph/parsed/:id", get(paragraph_parsed))
-        .route("/file_list", get(file_list))
+        .route("/files", get(file_list))
+        .route("/files/:id", post(file_upload))
         .route("/login", post(login))
         .route("/logout", get(logout))
 }
@@ -345,9 +347,12 @@ async fn file_list(auth: Auth) -> impl IntoResponse {
         Err(_) => return Err((StatusCode::BAD_REQUEST, "failed to delete")),
     };
 
+    dbg!(&file_list);
+
     let file_string = file_list
         .iter()
         .map(|(_, path)| path.to_str().unwrap().to_string())
+        .map(|path| format!("<option value=/{} />", path))
         .collect::<Vec<_>>()
         .join("\n")
         .to_string();
@@ -355,8 +360,22 @@ async fn file_list(auth: Auth) -> impl IntoResponse {
     Ok(Html(file_string))
 }
 
-async fn file_upload(auth: Auth) -> impl IntoResponse {
+async fn file_upload(
+    Path(id): Path<i64>,
+    auth: Auth,
+    mut multipart : axum::extract::Multipart
+
+) -> impl IntoResponse {
     require_admin!(auth);
+    // todo safe the unsafe
+    while let Some(mut field) = multipart.next_field().await.unwrap() {
+        let name = field.file_name().unwrap().to_string();
+        let data = field.bytes().await.unwrap();
+        let folder_path : PathBuf = format!("static/media/{}/", id).into();
+        std::fs::create_dir_all(&folder_path).unwrap();
+        let file_path = folder_path.join(name);
+        std::fs::write(file_path, data).unwrap();
+    }
 
     Ok(Html("file_upload".to_string()))
 }
