@@ -2,7 +2,7 @@
 
 use axum::{
     body::{Body, StreamBody},
-    extract::{Host, Query, State, connect_info::IntoMakeServiceWithConnectInfo},
+    extract::{connect_info::IntoMakeServiceWithConnectInfo, Host, Query, State},
     handler::HandlerWithoutStateExt,
     http::{Request, Response, StatusCode, Uri},
     response::{Html, IntoResponse, Redirect},
@@ -38,7 +38,6 @@ mod util;
 const TEMPLATE_DIR: &str = "templates";
 const PAGE_DIR: &str = "pages";
 const TEMPLATE_EXTENSION: &str = "html";
-
 const HTTP_PORT: u16 = 80;
 const HTTPS_PORT: u16 = 443;
 
@@ -89,7 +88,7 @@ async fn main() {
     dotenv().ok();
 
     tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::from_default_env())
+        .with(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or("info".into()))
         .with(tracing_subscriber::fmt::layer())
         .init();
 
@@ -124,12 +123,13 @@ async fn main() {
                     .await
                     .expect("failed to load cert");
 
-            let addr = SocketAddr::from(([127, 0, 0, 1], HTTPS_PORT));
+            let mut addr = SocketAddr::from(([0, 0, 0, 0], HTTPS_PORT));
+
             tracing::info!("listening on {}", addr);
+
             let app = setup_router(state);
 
             tokio::spawn(redirect_http_to_https());
-
             axum_server::bind_rustls(addr, config)
                 .serve(app)
                 .await
@@ -172,7 +172,7 @@ async fn redirect_http_to_https() {
         }
     };
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], HTTP_PORT));
+    let addr = SocketAddr::from(([0, 0, 0, 0], HTTP_PORT));
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
@@ -188,6 +188,7 @@ async fn redirect_http_to_https() {
         .await
         .unwrap();
 }
+
 // --------------------------------------------------------
 // static file handler
 // lommix.de/static
