@@ -75,14 +75,11 @@ async fn login(
     if form.user == user && form.password == pw {
         let cookie_hash = rand::random::<u128>();
 
-        match state.sessions.write() {
-            Ok(mut sessions) => {
-                sessions.push(Session {
-                    id: cookie_hash,
-                    user_state: UserState::Admin,
-                });
-            }
-            Err(_) => {}
+        if let Ok(mut sessions) = state.sessions.write() {
+            sessions.push(Session {
+                id: cookie_hash,
+                user_state: UserState::Admin,
+            });
         }
 
         let mut header = HeaderMap::new();
@@ -106,11 +103,8 @@ async fn login(
 async fn logout(auth: Auth, State(state): State<Arc<SharedState>>) -> impl IntoResponse {
     require_admin!(auth);
 
-    match state.sessions.write() {
-        Ok(mut sessions) => {
-            sessions.retain(|s| s.id != auth.id.unwrap());
-        }
-        Err(_) => {}
+    if let Ok(mut sessions) = state.sessions.write() {
+        sessions.retain(|s| s.id != auth.id.unwrap());
     }
 
     let mut header = HeaderMap::new();
@@ -352,8 +346,7 @@ async fn file_list(auth: Auth) -> impl IntoResponse {
         .map(|(_, path)| path.to_str().unwrap().to_string())
         .map(|path| format!("<option value=/{} />", path))
         .collect::<Vec<_>>()
-        .join("\n")
-        ;
+        .join("\n");
 
     Ok(Html(file_string))
 }
@@ -361,15 +354,14 @@ async fn file_list(auth: Auth) -> impl IntoResponse {
 async fn file_upload(
     Path(id): Path<i64>,
     auth: Auth,
-    mut multipart : axum::extract::Multipart
-
+    mut multipart: axum::extract::Multipart,
 ) -> impl IntoResponse {
     require_admin!(auth);
     // todo safe the unsafe
     while let Some(mut field) = multipart.next_field().await.unwrap() {
         let name = field.file_name().unwrap().to_string();
         let data = field.bytes().await.unwrap();
-        let folder_path : PathBuf = format!("static/media/{}/", id).into();
+        let folder_path: PathBuf = format!("static/media/{}/", id).into();
         std::fs::create_dir_all(&folder_path).unwrap();
         let file_path = folder_path.join(name);
         std::fs::write(file_path, data).unwrap();

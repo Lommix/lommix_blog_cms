@@ -12,18 +12,15 @@ impl Util {
             if path.is_dir() {
                 files.append(&mut Util::load_files_rec(path)?);
             } else if path.is_file() {
-                match path.file_name() {
-                    Some(name) => {
-                        let file_name = name
-                            .to_str()
-                            .ok_or(std::io::Error::new(
-                                std::io::ErrorKind::Other,
-                                "no file name",
-                            ))?
-                            .to_string();
-                        files.push((file_name.to_string(), path));
-                    }
-                    None => (),
+                if let Some(name) = path.file_name() {
+                    let file_name = name
+                        .to_str()
+                        .ok_or(std::io::Error::new(
+                            std::io::ErrorKind::Other,
+                            "no file name",
+                        ))?
+                        .to_string();
+                    files.push((file_name.to_string(), path));
                 };
             }
         }
