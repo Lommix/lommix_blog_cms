@@ -2,7 +2,7 @@
 
 use axum::{
     body::{Body, StreamBody},
-    extract::{Host, Query, State},
+    extract::{Host, Query, State, connect_info::IntoMakeServiceWithConnectInfo},
     handler::HandlerWithoutStateExt,
     http::{Request, Response, StatusCode, Uri},
     response::{Html, IntoResponse, Redirect},
@@ -138,13 +138,13 @@ async fn main() {
     }
 }
 
-fn setup_router(state: Arc<SharedState>) -> axum::routing::IntoMakeService<Router> {
+fn setup_router(state: Arc<SharedState>) -> IntoMakeServiceWithConnectInfo<Router, SocketAddr> {
     Router::new()
         .route("/static/*asset", get(asset_handle))
         .nest("/", pages::page_routes())
         .nest("/api", api::api_routes())
         .with_state(state)
-        .into_make_service()
+        .into_make_service_with_connect_info::<SocketAddr>()
 }
 
 async fn redirect_http_to_https() {

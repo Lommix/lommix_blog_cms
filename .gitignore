@@ -1,7 +1,8 @@
 /target
 /static/media
 /static/images
+/static/**
 .env
-*.db
+web.db
 cert.pem
 key.pem
