@@ -38,9 +38,12 @@
 	{% endif %}
 
 
-	<div class="markdown transition-all" hx-get="/api/paragraph/parsed/{{paragraph.id}}"
-		hx-trigger="load, submit from:#form-{{paragraph.id}} delay:0.3s" hx-on="htmx:load: hljs.highlightAll()">
-		{{paragraph.content}}
+
+	<div class="markdown transition-all"
+		hx-get="/api/paragraph/parsed/{{paragraph.id}}"
+		hx-trigger="{% if paragraph.paragraph_type == 'Markdown' %}load{% endif %}, submit from:#form-{{paragraph.id}} delay:0.3s"
+		hx-on="htmx:load: hljs.highlightAll()">
+		{{paragraph.content|safe}}
 	</div>
 
 </div>
