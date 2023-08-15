@@ -276,5 +276,5 @@ fn date_format(state: &minijinja::State, value: i64) -> String {
         None => return "".to_string(),
     };
 
-    (&time).to_string()
+    time.to_string()
 }
