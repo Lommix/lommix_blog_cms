@@ -2,6 +2,7 @@
 @tailwind utilities;
 @tailwind components;
 
+
 /* Code Highlights {{{*/
 .hljs {
 	@apply block;
@@ -117,3 +118,23 @@
 	@apply shadow-lg;
 }
 /*}}}*/
+
+/*{{{ Spinner {{{*/
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner {
+	margin-right: 1rem;
+	border-top-color: #FFF;
+	border-left-color: #FFF;
+	animation: spin 1s linear infinite;
+	border-radius: 50%;
+	border-width: 5px;
+	border-style: solid;
+	border-right-color: transparent;
+	border-bottom-color: transparent;
+	width: 34px;
+	height: 34px;
+}/*}}}*/
