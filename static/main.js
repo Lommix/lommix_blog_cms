@@ -27,12 +27,12 @@ function slide_down(id, pixel) {
 // @param {number} width
 // @param {number} height
 async function run_wasm(wasm_path, script_path, canvas_id, width, height) {
-	const script = await import("/static/media/1/boids-quadtree.js");
-	fetch("/static/media/1/boids-quadtree_bg.wasm")
+	const script = await import(script_path);
+	fetch(wasm_path)
 		.then((res) => res.arrayBuffer())
 		.then(async (bytes) => {
 			await script.initSync(bytes);
 			await script.init();
-			await script.run('#boids', 900, 900);
+			await script.run(canvas_id, width, height);
 		});
 }
