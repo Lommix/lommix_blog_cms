@@ -2,6 +2,9 @@
 @tailwind utilities;
 @tailwind components;
 
+body{
+	scroll-behavior: smooth;
+}
 
 /* Code Highlights {{{*/
 .hljs {

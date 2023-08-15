@@ -24,7 +24,6 @@ function slide_down(id, pixel) {
 // @param {string} wasm_path
 // @param {string} script_path
 // @param {string} canvas_id
-// @param {number} width
 // @param {number} height
 async function run_wasm(wasm_path, script_path, canvas_id, height) {
 	const script = await import(script_path);
@@ -37,6 +36,10 @@ async function run_wasm(wasm_path, script_path, canvas_id, height) {
 	</div>`;
 
 	canvas.parentNode.appendChild(loading_screen);
+	loading_screen.scrollIntoView({
+		behavior: 'smooth',
+	});
+
 	fetch(wasm_path)
 		.then((res) => res.arrayBuffer())
 		.then(async (bytes) => {
