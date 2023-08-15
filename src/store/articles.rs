@@ -30,7 +30,7 @@ impl Article {
             title,
             teaser: "".to_string(),
             cover: "".to_string(),
-            created_at: now.clone(),
+            created_at: now,
             updated_at: now,
             published: false,
             paragraphs: None,
@@ -100,7 +100,7 @@ impl Crud for Article {
         let mut stmt = con.prepare(
             "SELECT id, title, teaser, cover, created_at, updated_at, published FROM article WHERE id = ?"
         )?;
-        let mut rows = stmt.query(&[&id])?;
+        let mut rows = stmt.query([&id])?;
         match rows.next()? {
             Some(row) => Ok(Article {
                 id: row.get(0)?,
@@ -137,7 +137,7 @@ impl Crud for Article {
 
     fn delete(id: i64, con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
         let mut stmt = con.prepare("DELETE FROM article WHERE id = ?")?;
-        stmt.execute(&[&id])?;
+        stmt.execute([&id])?;
         Ok(())
     }
 }

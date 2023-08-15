@@ -230,7 +230,7 @@ fn load_dir(dir: PathBuf) -> Vec<(String, PathBuf)> {
             let path = file.unwrap().path();
             if path.is_dir() {
                 files.append(&mut load_dir(path));
-            } else if path.is_file() && path.extension() == Some(&OsStr::new(TEMPLATE_EXTENSION)) {
+            } else if path.is_file() && path.extension() == Some(OsStr::new(TEMPLATE_EXTENSION)) {
                 let route = path
                     .components()
                     .skip_while(|c| c.as_os_str() != TEMPLATE_DIR)
@@ -251,7 +251,7 @@ fn load_templates() -> minijinja::Environment<'static> {
     templates.iter().for_each(|(_, path)| {
         let file_name = path.file_name().unwrap().to_str().unwrap().to_string();
 
-        let template = std::fs::read_to_string(&path).unwrap();
+        let template = std::fs::read_to_string(path).unwrap();
 
         let name = path
             .components()
@@ -276,5 +276,5 @@ fn date_format(state: &minijinja::State, value: i64) -> String {
         None => return "".to_string(),
     };
 
-    format!("{}", &time)
+    (&time).to_string()
 }

@@ -55,9 +55,9 @@ impl TryFrom<&HeaderValue> for CookieJar {
         let cookies = header
             .to_str()
             .map_err(|_| ())?
-            .split(";")
+            .split(';')
             .map(|s| {
-                let pair = s.split("=").collect::<Vec<_>>();
+                let pair = s.split('=').collect::<Vec<_>>();
 
                 if pair.len() != 2 {
                     return Err(());
@@ -99,7 +99,7 @@ impl FromRequestParts<Arc<SharedState>> for Auth {
                         Ok(id) => id,
                         Err(_) => return Ok(Auth::default()),
                     };
-                    match sessions.iter().filter(|s| s.id == cookie_id).next() {
+                    match sessions.iter().find(|s| s.id == cookie_id) {
                         Some(s) => Ok(Auth::new(s.id, s.user_state.clone())),
                         None => Ok(Auth::default()),
                     }

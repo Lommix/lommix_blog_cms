@@ -320,7 +320,7 @@ async fn paragraph_parsed(
     State(state): State<Arc<SharedState>>,
 ) -> impl IntoResponse {
     match Paragraph::get_parsed(id, &state.db) {
-        Ok(p) => Ok((StatusCode::OK, Html(p.to_string()))),
+        Ok(p) => Ok((StatusCode::OK, Html(p))),
         Err(_) => Err((StatusCode::BAD_REQUEST, Html("not found".to_string()))),
     }
 }
@@ -353,7 +353,7 @@ async fn file_list(auth: Auth) -> impl IntoResponse {
         .map(|path| format!("<option value=/{} />", path))
         .collect::<Vec<_>>()
         .join("\n")
-        .to_string();
+        ;
 
     Ok(Html(file_string))
 }

@@ -50,7 +50,7 @@ impl Paragraph {
         let mut stmt = con.prepare(
             "SELECT id, article_id, title, description, paragraph_type, position, content FROM paragraph WHERE article_id = ?"
         )?;
-        let mut rows = stmt.query(&[&article_id])?;
+        let mut rows = stmt.query([&article_id])?;
         let mut paragraphs = Vec::new();
         while let Some(row) = rows.next()? {
             paragraphs.push(Paragraph {
@@ -70,7 +70,7 @@ impl Paragraph {
         let paragraph = Paragraph::find(id, con)?;
         match paragraph.paragraph_type {
             ParagraphType::Markdown => Ok(markdown::to_html(&paragraph.content)),
-            _ => Ok(paragraph.content.clone()),
+            _ => Ok(paragraph.content),
         }
     }
 }
@@ -117,7 +117,7 @@ impl Crud for Paragraph {
         let mut stmt = con.prepare(
             "SELECT id, article_id, title, description, paragraph_type, position, content FROM paragraph WHERE id = ?;"
         )?;
-        let mut rows = stmt.query(&[&id])?;
+        let mut rows = stmt.query([&id])?;
         match rows.next()? {
             Some(row) => Ok(Paragraph {
                 id: row.get(0)?,
@@ -167,7 +167,7 @@ impl Crud for Paragraph {
 
     fn delete(id: i64, con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
         let mut stmt = con.prepare("DELETE FROM paragraph WHERE id = ?")?;
-        stmt.execute(&[&id])?;
+        stmt.execute([&id])?;
         Ok(())
     }
 }
