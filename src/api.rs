@@ -247,8 +247,10 @@ async fn paragraph_get(
     Path(id): Path<i64>,
     State(state): State<Arc<SharedState>>,
 ) -> impl IntoResponse {
-    let paragraph = Paragraph::find(id, &state.db).unwrap();
-    Html("paragraph_detail".to_string())
+    match Paragraph::get_parsed(id, &state.db) {
+        Ok(p) => Ok(Html(p)),
+        Err(_) => Err((StatusCode::BAD_REQUEST, "failed to get")),
+    }
 }
 
 #[derive(serde::Deserialize)]

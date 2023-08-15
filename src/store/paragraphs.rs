@@ -61,8 +61,9 @@ impl Paragraph {
                 paragraph_type: row.get(4)?,
                 position: row.get(5)?,
                 content: row.get(6)?,
-            })
+            });
         }
+
         Ok(paragraphs)
     }
 
