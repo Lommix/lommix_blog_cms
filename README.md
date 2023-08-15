@@ -1,14 +1,9 @@
-# High performance standalone custom blog CMS
+# Lommix's Blog CMS
+### High performance standalone custom blog CMS written in rust.
+#### using <b> Minijinja Axum Sqlite Htmx </b> as core stack.
 
-## MASH Stack (Minijinja-Axum-Sqlite-Htmx)
+---
 
-All in one. A classic full stack application with little to no JS. Inspired by the good old days of the web, no bullshit, mostly static, high performance on the cheapest server.
+This is a custom minimalistic CMS used for my Blog @ [lommix.de](https://lommix.de)
 
-This implemtation includes:
-
-- authentication / admin login
-- a blog post editor
-- file management
-- cli
-
-### This code runs live on lommix.de
+![](docs/screenshot.png)
