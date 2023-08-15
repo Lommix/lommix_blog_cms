@@ -1,6 +1,6 @@
 # Lommix's Blog CMS
 ### High performance standalone custom blog CMS written in rust.
-#### using <b> Minijinja Axum Sqlite Htmx </b> as core stack.
+### using [<span style="color:orange"> Minijinja Axum Sqlite Htmx </span>] as core stack.
 
 ---
 
