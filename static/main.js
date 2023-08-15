@@ -23,17 +23,16 @@ function slide_down(id, pixel) {
 // @description import a wasm runtime
 // @param {string} wasm_path
 // @param {string} script_path
-// @param {string} target
 // @param {string} canvas_id
 // @param {number} width
 // @param {number} height
-async function run_wasm(wasm_path, script_path, canvas_id, width, height) {
+async function run_wasm(wasm_path, script_path, canvas_id, height) {
 	const script = await import(script_path);
 	let canvas = document.getElementById(canvas_id.replace("#", ""));
-
+	const max_width = canvas.parentNode.clientWidth;
 	const loading_screen = document.createElement("div");
 
-	loading_screen.innerHTML = `<div id="loading-screen" class="bg-black block flex justify-center items-center" style="height: ${height}px; width: ${width}px;">
+	loading_screen.innerHTML = `<div id="loading-screen" class="bg-black block flex justify-center items-center" style="height: ${height}px; width: ${max_width}px;">
 		<div class="text-white text-4xl flex flex-row spacing-x-5"><div class="spinner"></div>Loading</div>
 	</div>`;
 
@@ -44,6 +43,6 @@ async function run_wasm(wasm_path, script_path, canvas_id, width, height) {
 			await script.initSync(bytes);
 			await script.init();
 			document.getElementById("loading-screen").remove();
-			await script.run(canvas_id, width, height);
+			await script.run(canvas_id, max_width, height);
 		});
 }
