@@ -38,8 +38,6 @@ mod util;
 const TEMPLATE_DIR: &str = "templates";
 const PAGE_DIR: &str = "pages";
 const TEMPLATE_EXTENSION: &str = "html";
-const HTTP_PORT: u16 = 80;
-const HTTPS_PORT: u16 = 443;
 
 // --------------------------------------------------------
 // shared state
@@ -117,19 +115,27 @@ async fn main() {
         Command::Prod => {
             let cert_path = std::env::var("SSL_CERT").expect("CERT_PATH must be set");
             let key_path = std::env::var("SSL_KEY").expect("KEY_PATH must be set");
+            let https_port: u16 = std::env::var("HTTPS_PORT")
+                .expect("HTTPS_PORT must be set")
+                .parse()
+                .expect("bad https port");
+            let http_port: u16 = std::env::var("HTTP_PORT")
+                .expect("HTTP_PORT must be set")
+                .parse()
+                .expect("bad http port");
 
             let config =
                 RustlsConfig::from_pem_file(PathBuf::from(cert_path), PathBuf::from(key_path))
                     .await
                     .expect("failed to load cert");
 
-            let mut addr = SocketAddr::from(([0, 0, 0, 0], HTTPS_PORT));
+            let mut addr = SocketAddr::from(([0, 0, 0, 0], https_port.clone()));
 
             tracing::info!("listening on {}", addr);
 
             let app = setup_router(state);
 
-            tokio::spawn(redirect_http_to_https());
+            tokio::spawn(redirect_http_to_https(https_port, http_port));
             axum_server::bind_rustls(addr, config)
                 .serve(app)
                 .await
@@ -147,8 +153,13 @@ fn setup_router(state: Arc<SharedState>) -> IntoMakeServiceWithConnectInfo<Route
         .into_make_service_with_connect_info::<SocketAddr>()
 }
 
-async fn redirect_http_to_https() {
-    fn make_https(host: String, uri: Uri) -> Result<Uri, BoxError> {
+async fn redirect_http_to_https(https_port: u16, http_port: u16) {
+    fn make_https(
+        host: String,
+        uri: Uri,
+        https_port: u16,
+        http_port: u16,
+    ) -> Result<Uri, BoxError> {
         let mut parts = uri.into_parts();
 
         parts.scheme = Some(axum::http::uri::Scheme::HTTPS);
@@ -157,13 +168,15 @@ async fn redirect_http_to_https() {
             parts.path_and_query = Some("/".parse().unwrap());
         }
 
-        let https_host = host.replace(&HTTP_PORT.to_string(), &HTTPS_PORT.to_string());
+        let https_string = https_port.to_string();
+        let http_string = http_port.to_string();
+        let https_host = host.replace(http_string.as_str(), https_string.as_str());
         parts.authority = Some(https_host.parse()?);
         Ok(Uri::from_parts(parts)?)
     }
 
     let redirect = move |Host(host): Host, uri: Uri| async move {
-        match make_https(host, uri) {
+        match make_https(host, uri, https_port, http_port) {
             Ok(uri) => Ok(Redirect::permanent(&uri.to_string())),
             Err(error) => {
                 tracing::warn!(%error, "failed to convert URI to HTTPS");
@@ -172,7 +185,7 @@ async fn redirect_http_to_https() {
         }
     };
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], HTTP_PORT));
+    let addr = SocketAddr::from(([0, 0, 0, 0], http_port));
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
