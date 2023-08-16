@@ -1,22 +1,40 @@
-<div class="relative rounded-lg overflow-hidden">
-
-	<img src="/static/images/banner.jpg" alt="Banner" />
+<div class="relative rounded-md overflow-hidden">
+	<img src="/static/images/wizard-banner.jpg" alt="Banner" />
 	<div class="absolute w-full h-full top-0 left-0 justify-end flex">
-
 		{% if auth.user_state == "Admin" %}
-		<a class="cursor-pointer absolute top-0 right-0 p-1 bg-white rounded-bl-lg" hx-get="/api/logout">Logout</a>
+		<a
+			class="cursor-pointer absolute top-0 right-0 p-1 bg-white rounded-bl-lg"
+			hx-get="/api/logout"
+			>Logout</a
+		>
 		{% endif %}
 
-		<a href="/" class="w-full"></a>
-		<div class="flex flex-col w-full">
-			<div class="w-full h-full flex items-end justify-center">
-				<h1 title="Lommix's Blog" class="text-white font-bold text-lg sm:text-xl md:text-4xl">
-					[Lommix's Blog]
-				</h1>
+		<a href="/" class="absolute top-0 left-0 w-3/4 h-full z-40"></a>
+		<div class="flex flex-col w-2/3">
+			<div class="w-full h-full flex items-end justify-start">
+				<div class="wizard">
+					<h1
+						title="Lommix's Blog"
+						class="text-white font-bold text-lg sm:text-xl md:text-4xl"
+					>
+						[ Lommix's Blog ]
+					</h1>
+					<p class="italic hidden sm:block text-md">Gamedev, web wizardry & educational content</p>
+				</div>
 			</div>
-			<div class="w-full h-full flex justify-end items-end space-x-1 px-4">
-				<a class="px-5 py-2 bg-slate-700 text-white font-bold rounded-tl-xl" href="/">Blog</a>
-				<a class="px-5 py-2 bg-slate-700 text-white font-bold rounded-tr-xl" href="/about">About</a>
+			<div
+				class="w-full h-full flex justify-end items-end space-x-3 px-4"
+			>
+				<a
+					class="px-5 py-2 bg-slate-700 text-white font-bold opacity-70 hover:opacity-100"
+					href="/"
+					>Blog</a
+				>
+				<a
+					class="px-5 py-2 bg-slate-700 text-white font-bold opacity-70"
+					href="/about"
+					>About</a
+				>
 			</div>
 		</div>
 	</div>
