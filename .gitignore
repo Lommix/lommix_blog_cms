@@ -2,6 +2,7 @@
 /static/media
 /static/images
 /static/**
+!/static/images/wizard-banner.jpg
 .env
 web.db
 cert.pem
