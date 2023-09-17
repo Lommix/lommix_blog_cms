@@ -19,6 +19,7 @@ pub fn page_routes() -> Router<Arc<SharedState>, axum::body::Body> {
         .route("/", get(get_home))
         .route("/about", get(get_about))
         .route("/article/:id", get(get_article_detail))
+        .route("/donate", get(get_donate))
 }
 
 // ----------------------------------------
@@ -40,7 +41,6 @@ async fn get_home(State(state): State<Arc<SharedState>>, auth: Auth) -> impl Int
 
     Ok(Html(rendered))
 }
-
 // ----------------------------------------
 // about
 // lommix.de/about
@@ -60,6 +60,27 @@ async fn get_about(State(state): State<Arc<SharedState>>, auth: Auth) -> impl In
 
     Ok(Html(rendered))
 }
+
+// ----------------------------------------
+// about
+// lommix.de/donate
+// ----------------------------------------
+async fn get_donate(State(state): State<Arc<SharedState>>, auth: Auth) -> impl IntoResponse {
+    let tmpl = match state.templates.get_template("pages/donate.html") {
+        Ok(tmpl) => tmpl,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "missing template".to_string())),
+    };
+
+    let rendered = match tmpl.render(context! {
+        auth => auth,
+    }) {
+        Ok(html) => html,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "fucked up template".to_string())),
+    };
+
+    Ok(Html(rendered))
+}
+
 
 // ----------------------------------------
 // home
