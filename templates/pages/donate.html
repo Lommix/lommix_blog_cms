@@ -1,20 +1,25 @@
 {% extends 'components/layout.html' %}
 {% block content %}
-	{% block head %}
-			<title>Support me</title>
-			<meta name="author" content="Lommix" />
-			<meta property="og:title" content="Support me" />
-			<meta name="description" content="Support my work by liking, sharing or donating" />
-	{% endblock %}
-	<div class="w-full mt-8 markdown">
-		<h1 class="font-bold">Want to support me?</h1>
-		<hr />
-		<p>
-			Did any of my projects inspire or help you in some kind of way?
-			If so then leave me a like, star or comment on any platform below.
-			If thats not enough, feel free to donate.
-		</p>
-		<a href="https://www.paypal.com/donate/?hosted_button_id=8Q4QRN5ALF5AA"
-			class="text-xl font-bold">Paypal Donation Link</a>
-	</div>
+{% block head %}
+<title>Support me</title>
+<meta name="author" content="Lommix" />
+<meta property="og:title" content="Support me" />
+<meta name="description" content="Support my work by liking, sharing or donating" />
+{% endblock %}
+<div class="w-full mt-8 text-white">
+	<h1 class="font-bold text-5xl">Want to support me?</h1>
+	<hr />
+	<p class="mt-8">
+		Do you like what I am doing? Does any of my projects inspire you?
+		If so then leave me a star on <a href="https://github.com/Lommix">GitHub</a>.
+	</p>
+	<p>
+		If you want to support me even further, any donation is welcome.
+	</p>
+	<a href="https://www.paypal.com/donate/?hosted_button_id=8Q4QRN5ALF5AA" target="_blank"
+		class="text-xl font-bold bg-blue-800 hover:bg-blue-600 p-4 no-underline text-white flex flex-row w-fit px-8 mt-8">
+		<img class="mx-2" src="/static/images/paypal.svg" />
+		Donate
+	</a>
+</div>
 {% endblock %}
