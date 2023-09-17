@@ -74,6 +74,7 @@ unsafe impl Sync for SharedState {}
 #[derive(Parser)]
 enum Command {
     Init,
+    Migrate,
     Dev,
     Prod,
 }
@@ -105,6 +106,9 @@ async fn main() {
         Command::Init => {
             Article::up(&state.db).unwrap();
             Paragraph::up(&state.db).unwrap();
+        }
+        Command::Migrate => {
+            todo!();
         }
         Command::Dev => {
             let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

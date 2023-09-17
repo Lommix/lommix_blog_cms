@@ -114,6 +114,7 @@ impl Crud for Paragraph {
         }
         Ok(paragraphs)
     }
+
     fn find(id: i64, con: &rusqlite::Connection) -> Result<Self, rusqlite::Error> {
         let mut stmt = con.prepare(
             "SELECT id, article_id, title, description, paragraph_type, position, content FROM paragraph WHERE id = ?;"
@@ -132,6 +133,7 @@ impl Crud for Paragraph {
             None => Err(rusqlite::Error::QueryReturnedNoRows),
         }
     }
+
     fn insert(&mut self, con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
         let mut stmt = con.prepare(
             "INSERT INTO paragraph (article_id, title, description, paragraph_type, position, content) VALUES (?, ?, ?, ?, ?, ?);",
