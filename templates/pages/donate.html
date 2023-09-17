@@ -1,20 +1,20 @@
-{% extends 'components/layout.html' %} {% block content %} {% block head %}
-<title>Donate</title>
-{% endblock %}
-
-<div class="w-full markdown mt-8">
-	<h1 class="font-bold">Want to support me?</h1>
-	<hr />
-	<p>
-		Did any of my projects inspired or helped you in some kind of way?
-	</p>
-	<p> Then leave me like, star or comment on any platform below.</p>
-	<p> If thats not enough for you, feel free to donate.</p>
-	<a
-		href="https://www.paypal.com/donate/?hosted_button_id=8Q4QRN5ALF5AA"
-		class="underline underline-offset-4 text-xl font-bold"
-		>You can leave me a donation here</a
-	>
-</div>
-
+{% extends 'components/layout.html' %}
+{% block content %}
+	{% block head %}
+			<title>Support me</title>
+			<meta name="author" content="Lommix" />
+			<meta property="og:title" content="Support me" />
+			<meta name="description" content="Support my work by liking, sharing or donating" />
+	{% endblock %}
+	<div class="w-full mt-8 markdown">
+		<h1 class="font-bold">Want to support me?</h1>
+		<hr />
+		<p>
+			Did any of my projects inspire or help you in some kind of way?
+			If so then leave me a like, star or comment on any platform below.
+			If thats not enough, feel free to donate.
+		</p>
+		<a href="https://www.paypal.com/donate/?hosted_button_id=8Q4QRN5ALF5AA"
+			class="text-xl font-bold">Paypal Donation Link</a>
+	</div>
 {% endblock %}
