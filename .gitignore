@@ -1,7 +1,5 @@
 /target
 /static/media
-/static/images
-/static/**
 .env
 web.db
 cert.pem
