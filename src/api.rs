@@ -3,6 +3,7 @@ use crate::auth::AUTH_COOKIE;
 use crate::store::articles::Article;
 use crate::store::paragraphs::Paragraph;
 use crate::store::paragraphs::ParagraphType;
+use crate::store::stats::Stats;
 use crate::Session;
 use crate::UserState;
 
@@ -51,6 +52,7 @@ pub fn api_routes() -> Router<Arc<SharedState>, axum::body::Body> {
         .route("/files", get(file_list))
         .route("/files/:id", post(file_upload))
         .route("/login", post(login))
+        .route("/stats", get(get_stats))
         .route("/logout", get(logout))
 }
 
@@ -180,6 +182,7 @@ pub struct ArticleForm {
     title: String,
     teaser: Option<String>,
     cover: Option<String>,
+    alias: Option<String>,
     published: bool,
 }
 
@@ -212,6 +215,7 @@ async fn article_update(
     article.title = form.title;
     article.teaser = form.teaser.unwrap_or("".to_string());
     article.cover = form.cover.unwrap_or("".to_string());
+    article.alias = form.alias.unwrap_or("".to_string());
     article.published = form.published;
 
     let tmpl = match state
@@ -332,6 +336,7 @@ async fn paragraph_delete(
         Err(e) => Err((StatusCode::BAD_REQUEST, "failed to delete")),
     }
 }
+
 // ------------------------------------------------------
 // files
 // ------------------------------------------------------
@@ -370,4 +375,26 @@ async fn file_upload(
     }
 
     Ok(Html("file_upload".to_string()))
+}
+
+// ------------------------------------------------------
+// stats
+// ------------------------------------------------------
+async fn get_stats(auth: Auth, State(state): State<Arc<SharedState>>) -> impl IntoResponse {
+    // require_admin!(auth);
+
+    let stats = match Stats::get_last_days(3, &state.db) {
+        Ok(stats) => stats,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "failed to get")),
+    };
+
+    let tmpl = match state
+        .templates
+        .get_template("components/stats.html")
+    {
+        Ok(tmpl) => tmpl,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "missing template")),
+    };
+
+    Ok(Html(tmpl.render(context! {stats=>stats}).unwrap()))
 }

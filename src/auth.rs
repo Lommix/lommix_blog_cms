@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{store::articles::Article, store::Crud, SharedState, UserState};
+use crate::{store::articles::Article, store::{Crud, stats::Stats}, SharedState, UserState};
 use axum::{
     async_trait,
     extract::{FromRequest, FromRequestParts},

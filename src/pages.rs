@@ -1,5 +1,6 @@
 use crate::store::articles::Article;
 use crate::store::paragraphs::Paragraph;
+use crate::store::stats::Stats;
 
 use super::auth::Auth;
 use super::store::*;
@@ -33,6 +34,14 @@ async fn get_home(State(state): State<Arc<SharedState>>, auth: Auth) -> impl Int
         Err(_) => return Err((StatusCode::BAD_REQUEST, "missing template".to_string())),
     };
 
+    match Stats::find_or_create_today(&state.db){
+        Ok(mut stats) => {
+            stats.home_views += 1;
+            stats.update(&state.db);
+        }
+        Err(_) => {}
+    }
+
     let rendered = match tmpl.render(context! {
         auth => auth,
     }) {
@@ -51,6 +60,14 @@ async fn get_about(State(state): State<Arc<SharedState>>, auth: Auth) -> impl In
         Ok(tmpl) => tmpl,
         Err(_) => return Err((StatusCode::BAD_REQUEST, "missing template".to_string())),
     };
+
+    match Stats::find_or_create_today(&state.db){
+        Ok(mut stats) => {
+            stats.about_views += 1;
+            stats.update(&state.db);
+        }
+        Err(_) => {}
+    }
 
     let rendered = match tmpl.render(context! {
         auth => auth,
@@ -72,6 +89,14 @@ async fn get_donate(State(state): State<Arc<SharedState>>, auth: Auth) -> impl I
         Err(_) => return Err((StatusCode::BAD_REQUEST, "missing template".to_string())),
     };
 
+    match Stats::find_or_create_today(&state.db){
+        Ok(mut stats) => {
+            stats.donate_views += 1;
+            stats.update(&state.db);
+        }
+        Err(_) => {}
+    }
+
     let rendered = match tmpl.render(context! {
         auth => auth,
     }) {
@@ -91,7 +116,6 @@ async fn get_article_detail(
     auth: Auth,
     State(state): State<Arc<SharedState>>,
 ) -> impl IntoResponse {
-
 
     //parse alias to int
     let result = match alias.parse::<i64>() {
@@ -113,40 +137,14 @@ async fn get_article_detail(
         Err(_) => return Err((StatusCode::BAD_REQUEST, "missing template".to_string())),
     };
 
-    let rendered = match tmpl.render(context! {
-        auth => auth,
-        article => article,
-    }) {
-        Ok(html) => html,
-        Err(_) => return Err((StatusCode::BAD_REQUEST, "fucked up template".to_string())),
-    };
 
-    Ok(Html(rendered))
-}
-
-// ----------------------------------------
-// home
-// lommix.de/article/:id
-// ----------------------------------------
-async fn get_article_detail_from_id(
-    Path(id): Path<i64>,
-    auth: Auth,
-    State(state): State<Arc<SharedState>>,
-) -> impl IntoResponse {
-
-    let article = match Article::find(id, &state.db) {
-        Ok(article) => article,
-        Err(_) => return Err((StatusCode::NOT_FOUND, "not found".to_string())),
-    };
-
-    if (!article.published && !auth.is_admin()) {
-        return Err((StatusCode::NOT_FOUND, "not found".to_string()));
+    match Stats::find_or_create_today(&state.db){
+        Ok(mut stats) => {
+            stats.article_views.add(article.id.unwrap());
+            stats.update(&state.db);
+        }
+        Err(_) => {}
     }
-
-    let tmpl = match state.templates.get_template("pages/article.html") {
-        Ok(tmpl) => tmpl,
-        Err(_) => return Err((StatusCode::BAD_REQUEST, "missing template".to_string())),
-    };
 
     let rendered = match tmpl.render(context! {
         auth => auth,

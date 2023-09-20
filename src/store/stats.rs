@@ -14,6 +14,12 @@ pub struct ArticleViews {
     data: HashMap<i64, i64>,
 }
 
+impl ArticleViews {
+    pub fn add(&mut self, article_id: i64) {
+        *self.data.entry(article_id).or_insert(0) += 1
+    }
+}
+
 impl ToSql for ArticleViews {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         let string = serde_json::to_string(self).map_err(|err| rusqlite::Error::InvalidQuery)?;
@@ -43,7 +49,7 @@ impl Stats {
             .date_naive()
             .and_time(chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap())
             .timestamp();
-        match Self::find(now, con){
+        match Self::find(now, con) {
             Ok(stats) => Ok(stats),
             Err(_) => {
                 let mut stats = Self {
@@ -54,6 +60,26 @@ impl Stats {
                 Ok(stats)
             }
         }
+    }
+
+    pub fn get_last_days(
+        days: i64,
+        con: &rusqlite::Connection,
+    ) -> Result<Vec<Self>, rusqlite::Error> {
+        let mut stmt = con.prepare("SELECT * FROM stats ORDER BY date DESC LIMIT ?")?;
+        let mut rows = stmt.query([days])?;
+        let mut result = Vec::new();
+
+        while let Some(row) = rows.next()? {
+            result.push(Stats {
+                date: row.get(0)?,
+                home_views: row.get(1)?,
+                about_views: row.get(2)?,
+                donate_views: row.get(3)?,
+                article_views: row.get(4)?,
+            });
+        }
+        Ok(result)
     }
 }
 

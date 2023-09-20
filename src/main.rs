@@ -278,6 +278,7 @@ fn load_templates() -> minijinja::Environment<'static> {
         println!("loaded template: {} line: {}", file_name, name);
 
         env.add_filter("date", date_format);
+        env.add_filter("weekday", date_format_smol);
         env.add_template_owned(name, template)
             .expect("error loading template");
     });
@@ -290,6 +291,14 @@ fn date_format(state: &minijinja::State, value: i64) -> String {
         Some(time) => time.format("%d. %B %Y").to_string(),
         None => return "".to_string(),
     };
-
     time
 }
+
+fn date_format_smol(state: &minijinja::State, value: i64) -> String {
+    let time = match NaiveDateTime::from_timestamp_opt(value, 0) {
+        Some(time) => time.format("%a").to_string(),
+        None => return "".to_string(),
+    };
+    time
+}
+

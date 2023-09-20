@@ -1,0 +1,19 @@
+<div class="w-full text-white font-bold text-sm">
+	<span class="text-md">View counter</span>
+	<table class="border-collapse table-auto border-white border">
+		<tr>
+			<th class="px-2 border-r border-white">Day</th>
+			<th class="px-2 border-r border-white">Donate</th>
+			<th class="px-2 border-r border-white">About</th>
+			<th class="px-2">Home</th>
+		</tr>
+		{% for daily in stats %}
+		<tr class="border-white border text-right">
+			<td class="px-2">{{ daily.date|weekday }}</td>
+			<td class="px-2">{{ daily.donate_views }}</td>
+			<td class="px-2">{{ daily.about_views }}</td>
+			<td class="px-2">{{ daily.home_views }}</td>
+		</tr>
+		{% endfor %}
+	</table>
+</div>
