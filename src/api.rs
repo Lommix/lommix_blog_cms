@@ -381,7 +381,8 @@ async fn file_upload(
 // stats
 // ------------------------------------------------------
 async fn get_stats(auth: Auth, State(state): State<Arc<SharedState>>) -> impl IntoResponse {
-    // require_admin!(auth);
+
+    require_admin!(auth);
 
     let stats = match Stats::get_last_days(3, &state.db) {
         Ok(stats) => stats,
