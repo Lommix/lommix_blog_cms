@@ -27,7 +27,7 @@ use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::Subs
 
 use crate::store::{articles::Article, paragraphs::Paragraph};
 use dotenv::dotenv;
-use store::SchemaUp;
+use store::{SchemaUp, stats::Stats};
 
 mod api;
 mod auth;
@@ -74,7 +74,6 @@ unsafe impl Sync for SharedState {}
 #[derive(Parser)]
 enum Command {
     Init,
-    Migrate,
     Dev,
     Prod,
 }
@@ -106,9 +105,7 @@ async fn main() {
         Command::Init => {
             Article::up(&state.db).unwrap();
             Paragraph::up(&state.db).unwrap();
-        }
-        Command::Migrate => {
-            todo!();
+            Stats::up(&state.db).unwrap();
         }
         Command::Dev => {
             let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
