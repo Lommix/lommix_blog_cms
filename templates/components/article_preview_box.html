@@ -4,7 +4,14 @@
 	<div class="w-full h-full flex-col md:flex-row flex space-x-0 space-y-4 md:space-x-4 md:space-y-0">
 		<div class="w-full h-full flex justify-center hover:border-slate-400 border-slate-200 rounded-lg border-2 p-2 overflow-hidden">
 			<a class="overflow-hidden hover:scale-105 transition-all {% if not article.published %}grayscale{% endif %}"
-				href="/article/{{ article.id }}">
+				{% if article.alias %}
+				href="/article/{{ article.alias }}"
+				{% else %}
+				href="/article/{{ article.id }}"
+				{% endif %}
+
+				>
+
 				{% if article.cover %}
 				<img src="{{article.cover}}" alt="Banner" class="max-h-96" />
 				{% else %}

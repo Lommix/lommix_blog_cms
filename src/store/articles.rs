@@ -43,7 +43,7 @@ impl Article {
         let mut stmt = con.prepare("SELECT id, title, teaser, cover, created_at, updated_at, published, alias FROM article WHERE alias = ?")?;
         let mut rows = stmt.query([&alias])?;
         if let Some(row) = rows.next()? {
-            return Ok(Article {
+            let mut article = Article {
                 id: row.get(0)?,
                 title: row.get(1)?,
                 teaser: row.get(2)?,
@@ -53,7 +53,9 @@ impl Article {
                 published: row.get(6)?,
                 alias: row.get(7)?,
                 paragraphs: None,
-            });
+            };
+            article.paragraphs = Some(Paragraph::find_by_article_id(article.id.unwrap(), con)?);
+            return Ok(article);
         }
         Err(rusqlite::Error::QueryReturnedNoRows)
     }
