@@ -120,6 +120,9 @@ body{
 	@apply shadow-slate-950;
 	@apply shadow-lg;
 }
+.markdown img{
+	margin : auto;
+}
 /*}}}*/
 
 /*{{{ Spinner {{{*/
