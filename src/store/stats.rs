@@ -148,13 +148,14 @@ impl Crud for Stats {
 
     fn update(&self, con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
         let mut stmt = con.prepare(
-            "UPDATE stats SET home_views = ?, about_views = ?, donate_views = ?, article_views = ?",
+            "UPDATE stats SET home_views = ?, about_views = ?, donate_views = ?, article_views = ? WHERE date = ?",
         )?;
         stmt.execute(params![
             &self.home_views,
             &self.about_views,
             &self.donate_views,
             &self.article_views,
+            &self.date,
         ])?;
         Ok(())
     }
