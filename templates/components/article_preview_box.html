@@ -5,9 +5,9 @@
 		<div class="w-full h-full flex justify-center hover:border-slate-400 border-slate-200 rounded-lg border-2 p-2 overflow-hidden">
 			<a class="overflow-hidden hover:scale-105 transition-all {% if not article.published %}grayscale{% endif %}"
 				{% if article.alias %}
-				href="/article/{{ article.alias }}"
+					href="/article/{{ article.alias }}"
 				{% else %}
-				href="/article/{{ article.id }}"
+					href="/article/{{ article.id }}"
 				{% endif %}
 
 				>
@@ -21,7 +21,13 @@
 		</div>
 		<div class="w-full">
 			<h1 class="text-white text-3xl">
-				<a href="/article/{{ article.id }}"> {{ article.title }} </a>
+				<a
+				{% if article.alias %}
+					href="/article/{{ article.alias }}"
+				{% else %}
+					href="/article/{{ article.id }}"
+				{% endif %}
+				>{{ article.title }}</a>
 			</h1>
 			<hr>
 			<span class="text-sm">{{ article.updated_at|date }}</span>
