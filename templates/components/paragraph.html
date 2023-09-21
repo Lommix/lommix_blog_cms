@@ -15,9 +15,15 @@
 				<input type="hidden" name="article_id" value="{{paragraph.article_id}}" />
 				<textarea class="leading-4 w-full p-1 text-lg h-72 overflow-scroll resize-none mt-1" type="text"
 					name="content">{{paragraph.content}}</textarea>
-				<select name="paragraph_type" class="w-full p-1" value="{{paragraph.paragraph_type}}">
-					<option>Markdown</option>
-					<option>Html</option>
+				<select name="paragraph_type" class="w-full p-1">
+					<option
+						value="Markdown"
+						{% if paragraph.paragraph_type == "Markdown" %}selected{% endif %}
+					>Markdown</option>
+					<option
+						value="Html"
+						{% if paragraph.paragraph_type == "Html" %}selected{% endif %}
+					>Html</option>
 				</select>
 				<input class="absolute bottom-4 left-4 bg-green-600 hover:bg-green-500 rounded-sm px-2 py-1 block mt-1 "
 					type="submit" value="save" />
@@ -37,11 +43,15 @@
 	</div>
 	{% endif %}
 
-
-	<div class="markdown transition-all" hx-get="/api/paragraph/parsed/{{paragraph.id}}"
-		hx-trigger="load, submit from:#form-{{paragraph.id}} delay:0.3s"
+	<div class="markdown transition-all" hx-get="/api/paragraph/{{paragraph.id}}"
+		hx-trigger="submit from:#form-{{paragraph.id}} delay:0.3s"
+		onload="console.log('loaded')"
 		hx-on="htmx:load: hljs.highlightAll()">
-		{{paragraph.content|safe}}
+		{% if paragraph.paragraph_type == "Markdown" %}
+			{{paragraph.rendered|safe}}
+		{% else %}
+			{{paragraph.content|safe}}
+		{% endif %}
 	</div>
 
 </div>

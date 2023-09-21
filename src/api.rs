@@ -48,7 +48,6 @@ pub fn api_routes() -> Router<Arc<SharedState>, axum::body::Body> {
                 .delete(paragraph_delete)
                 .put(paragraph_update),
         )
-        .route("/paragraph/parsed/:id", get(paragraph_parsed))
         .route("/files", get(file_list))
         .route("/files/:id", post(file_upload))
         .route("/login", post(login))
@@ -251,8 +250,14 @@ async fn paragraph_get(
     Path(id): Path<i64>,
     State(state): State<Arc<SharedState>>,
 ) -> impl IntoResponse {
-    match Paragraph::get_parsed(id, &state.db) {
-        Ok(p) => Ok(Html(p)),
+    match Paragraph::find(id, &state.db) {
+        Ok(p) => {
+            let rendered = match p.rendered{
+                Some(r) => r,
+                None => p.content,
+            };
+            Ok((StatusCode::OK, Html(rendered)))
+        },
         Err(_) => Err((StatusCode::BAD_REQUEST, "failed to get")),
     }
 }
@@ -306,22 +311,13 @@ async fn paragraph_create(
         position: 0,
         title: "".to_string(),
         description: "".to_string(),
+        rendered: None,
     }
     .insert(&state.db);
 
     match paragraph {
         Ok(p) => Ok((StatusCode::CREATED, Html("created".to_string()))),
         Err(_) => Err((StatusCode::BAD_REQUEST, "failed to create")),
-    }
-}
-
-async fn paragraph_parsed(
-    Path(id): Path<i64>,
-    State(state): State<Arc<SharedState>>,
-) -> impl IntoResponse {
-    match Paragraph::get_parsed(id, &state.db) {
-        Ok(p) => Ok((StatusCode::OK, Html(p))),
-        Err(_) => Err((StatusCode::BAD_REQUEST, Html("not found".to_string()))),
     }
 }
 

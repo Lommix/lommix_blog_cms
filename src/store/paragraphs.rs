@@ -40,6 +40,7 @@ pub struct Paragraph {
     pub paragraph_type: ParagraphType,
     pub position: i64,
     pub content: String,
+    pub rendered: Option<String>,
 }
 
 impl Paragraph {
@@ -53,7 +54,7 @@ impl Paragraph {
         let mut rows = stmt.query([&article_id])?;
         let mut paragraphs = Vec::new();
         while let Some(row) = rows.next()? {
-            paragraphs.push(Paragraph {
+            let mut para = Paragraph {
                 id: row.get(0)?,
                 article_id: row.get(1)?,
                 title: row.get(2)?,
@@ -61,18 +62,18 @@ impl Paragraph {
                 paragraph_type: row.get(4)?,
                 position: row.get(5)?,
                 content: row.get(6)?,
-            });
+                rendered: None,
+            };
+
+            match para.paragraph_type {
+                ParagraphType::Markdown => para.rendered = Some(markdown::to_html(&para.content)),
+                _ => (),
+            };
+
+            paragraphs.push(para);
         }
 
         Ok(paragraphs)
-    }
-
-    pub fn get_parsed(id: i64, con: &rusqlite::Connection) -> Result<String, rusqlite::Error> {
-        let paragraph = Paragraph::find(id, con)?;
-        match paragraph.paragraph_type {
-            ParagraphType::Markdown => Ok(markdown::to_html(&paragraph.content)),
-            _ => Ok(paragraph.content),
-        }
     }
 }
 
@@ -102,7 +103,7 @@ impl Crud for Paragraph {
         )?;
         let mut rows = stmt.query([])?;
         while let Some(row) = rows.next()? {
-            paragraphs.push(Paragraph {
+            let mut para = Paragraph {
                 id: row.get(0)?,
                 article_id: row.get(1)?,
                 title: row.get(2)?,
@@ -110,7 +111,15 @@ impl Crud for Paragraph {
                 paragraph_type: row.get(4)?,
                 position: row.get(5)?,
                 content: row.get(6)?,
-            })
+                rendered: None,
+            };
+
+            match para.paragraph_type {
+                ParagraphType::Markdown => para.rendered = Some(markdown::to_html(&para.content)),
+                _ => (),
+            }
+
+            paragraphs.push(para);
         }
         Ok(paragraphs)
     }
@@ -121,15 +130,23 @@ impl Crud for Paragraph {
         )?;
         let mut rows = stmt.query([&id])?;
         match rows.next()? {
-            Some(row) => Ok(Paragraph {
-                id: row.get(0)?,
-                article_id: row.get(1)?,
-                title: row.get(2)?,
-                description: row.get(3)?,
-                paragraph_type: row.get(4)?,
-                position: row.get(5)?,
-                content: row.get(6)?,
-            }),
+            Some(row) => {
+                let mut para = Paragraph {
+                    id: row.get(0)?,
+                    article_id: row.get(1)?,
+                    title: row.get(2)?,
+                    description: row.get(3)?,
+                    paragraph_type: row.get(4)?,
+                    position: row.get(5)?,
+                    content: row.get(6)?,
+                    rendered: None,
+                };
+                match para.paragraph_type {
+                    ParagraphType::Markdown => para.rendered = Some(markdown::to_html(&para.content)),
+                    _ => (),
+                }
+                Ok(para)
+            }
             None => Err(rusqlite::Error::QueryReturnedNoRows),
         }
     }

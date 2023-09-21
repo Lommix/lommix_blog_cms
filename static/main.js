@@ -51,3 +51,7 @@ async function run_wasm(wasm_path, script_path, canvas_id, height) {
 			await script.run(canvas_id, max_width, height);
 		});
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+	hljs.highlightAll()
+})
