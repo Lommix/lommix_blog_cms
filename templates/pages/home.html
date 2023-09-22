@@ -1,19 +1,14 @@
 {% extends 'components/layout.html' %}
-
 {% block head %}
 <title>Lommix's Blog</title>
 <meta name="author" content="Lommix" />
 <meta property="og:title" content="Lommix's Blog" />
 <meta name="description" content="My name is Lorenz, I am a web/game developer from Germany. Driven by passion and curiosity, I am always eager to learn new things and explore. On this blog I share my projects, opinions, experiences and some tips and tricks along the way." />
 {% endblock %}
-
 {% block content %}
-
-
 {% if auth.user_state == "Admin" %}
-
-
-<div id="dropdown" class="w-full block relative overflow-hidden ease-in transform transition-all duration-300 h-0">
+<button class="cursor-pointer text-white px-4 py-1 border-white border" onclick="slide_down('create_form', 70)">New</button>
+<div id="create_form" class="w-full block relative overflow-hidden ease-in transform transition-all duration-300 h-0 mt-1">
 	<div class="absolute w-full bg-slate-200 rounded-lg p-2 left-0">
 		<form hx-post="/api/article" class="create flex flex-row items-center text-xl" hx-swap="none">
 			<label class="h-full text-center mx-4 font-bold" for="title">Title:</label>
@@ -26,7 +21,6 @@
 	</div>
 </div>
 {% else %}
-<button class="absolute right-0 -top-8 h-1 w-1" onclick="slide_down('dropdown', 75)"></button>
 <div id="dropdown" class="w-full relative overflow-hidden ease-in transform transition-all duration-300 h-0">
 	<div class="w-full absolute top-0 left-0">
 		{% include 'components/login.html' %}
