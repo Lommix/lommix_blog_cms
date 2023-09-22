@@ -1,13 +1,7 @@
 <div class="relative overflow-hidden">
 	<img src="/static/images/new_banner.svg" alt="Banner" />
+	<button class="absolute bottom-0 left-0 z-50 h-2 w-2 cursor-pointer" onclick="slide_down('dropdown', 70)"></button>
 	<div class="absolute w-full h-full top-0 left-0 justify-end flex">
-		{% if auth.user_state == "Admin" %}
-		<a
-			class="cursor-pointer absolute top-0 right-0 p-1 bg-white rounded-bl-lg"
-			hx-get="/api/logout"
-			>Logout</a
-		>
-		{% endif %}
 
 		<a href="/" class="absolute top-0 left-0 w-3/4 h-full z-40"></a>
 		<div class="flex flex-col w-2/3">

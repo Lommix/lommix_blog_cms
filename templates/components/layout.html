@@ -16,6 +16,14 @@
 <body class="w-full h-full relative">
 	{% if auth.user_state == "Admin" %}
 		<div hx-get="/api/stats" hx-trigger="load, every 2s" class="fixed top-1 right-1 bg-opacity-30 bg-blue-600 z-50 p-4"></div>
+		{% if auth.user_state == "Admin" %}
+			<a
+				class="cursor-pointer w-full text-white border-white border-2"
+				hx-get="/api/logout"
+				>Logout</a
+			>
+		{% endif %}
+
 	{% endif %}
 	<div class="flex justify-center">
 		<div class="wrapper max-w-7xl w-full h-full relative p-4 mb-24">
