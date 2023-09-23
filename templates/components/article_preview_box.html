@@ -20,7 +20,7 @@
 			</a>
 		</div>
 		<div class="w-full">
-			<h1 class="text-white text-3xl">
+			<h2 class="text-white text-3xl">
 				<a
 				{% if article.alias %}
 					href="/article/{{ article.alias }}"
@@ -28,7 +28,7 @@
 					href="/article/{{ article.id }}"
 				{% endif %}
 				>{{ article.title }}</a>
-			</h1>
+			</h2>
 			<hr>
 			<span class="text-sm">{{ article.updated_at|date }}</span>
 			<p>

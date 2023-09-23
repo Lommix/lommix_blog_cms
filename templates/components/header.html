@@ -1,8 +1,10 @@
-<div class="relative overflow-hidden">
+<div class="relative">
 	<img src="/static/images/new_banner.svg" alt="Banner" />
-	<button class="absolute bottom-0 left-0 z-50 h-2 w-2 cursor-pointer" onclick="slide_down('dropdown', 70)"></button>
+	<button
+		class="absolute bottom-0 left-0 z-50 h-2 w-2 cursor-pointer"
+		onclick="slide_down('dropdown', 70)"
+	></button>
 	<div class="absolute w-full h-full top-0 left-0 justify-end flex">
-
 		<a href="/" class="absolute top-0 left-0 w-3/4 h-full z-40"></a>
 		<div class="flex flex-col w-2/3">
 			<div class="w-full h-full flex items-end justify-start">
@@ -16,31 +18,34 @@
 			</div>
 		</div>
 	</div>
-
-	<div
-		class="absolute bottom-0 bg-slate-800 rounded-sm w-full flex space-x-2 flex-row justify-between text-xl items-center py-1"
-	>
-		<div
-			class="flex flex-row w-full items-center justify-center md:justify-start space-x-2 pl-2"
-		>
-			<h1
-				title="Lommix's Blog"
-				class="text-white font-bold text-2xl sm:text-4xl"
-				>[ Lommix's Blog ]</h1
-			>
-		</div>
-		<div class="flex-row hidden md:flex">
-			<a class="px-5 text-white font-bold" href="/">Blog</a>
-			<a class="px-5 text-white font-bold" href="/about">About</a>
-		</div>
-		<div></div>
-	</div>
 </div>
+
+<div
+	class="-mt-1 sm:-mt-3 md:-mt-4 lg:-mt-5 xl:-mt-6 bg-slate-800 rounded-sm w-full  flex space-x-2 flex-row justify-between text-xl items-center py-1"
+>
+	<div
+		class="flex flex-row w-full items-center justify-center md:justify-start space-x-2 pl-2"
+	>
+		<h1
+			title="Lommix's Blog"
+			class="text-white font-bold text-2xl sm:text-4xl"
+			>[ Lommix's Blog ]</h1
+		>
+	</div>
+	<div class="flex-row hidden md:flex">
+		<a class="px-5 text-white font-bold" href="/">Blog</a>
+		<a class="px-5 text-white font-bold" href="/about">About</a>
+	</div>
+	<div></div>
+</div>
+
 <p class="italic m-0 p-0 py-1 text-center md:text-left"
 	>Gamedev, web wizardry & educational content</p
 >
 
 <div class="w-full flex flex-row space-x-3 justify-center text-xl md:hidden">
 	<a class="text-white font-bold bg-slate-700 px-4 py-1" href="/">Blog</a>
-	<a class="text-white font-bold bg-slate-700 px-4 py-1" href="/about">About</a>
+	<a class="text-white font-bold bg-slate-700 px-4 py-1" href="/about"
+		>About</a
+	>
 </div>
