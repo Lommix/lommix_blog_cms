@@ -1,6 +1,5 @@
 // Using js in the intended way, small animations and transitions.
 
-
 // @description Toggle an element
 // @param {string} id
 function toggle(id) {
@@ -38,7 +37,7 @@ async function run_wasm(wasm_path, script_path, canvas_id, height) {
 
 	canvas.parentNode.appendChild(loading_screen);
 	loading_screen.scrollIntoView({
-		behavior: 'smooth',
+		behavior: "smooth",
 	});
 
 	fetch(wasm_path)
@@ -53,5 +52,7 @@ async function run_wasm(wasm_path, script_path, canvas_id, height) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-	hljs.highlightAll()
-})
+	if (typeof hljs !== "undefined") {
+		hljs.highlightAll();
+	}
+});
