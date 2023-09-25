@@ -14,9 +14,9 @@
 </head>
 
 <body class="w-full h-full relative">
-	{% if auth.user_state == "Admin" %}
+	{% if auth.user_state != "Admin" %}
 		<div class="fixed flex-col flex space-y-3 right-1 top-1 bg-opacity-50 bg-blue-600 z-50 p-4">
-			<div hx-get="/api/stats" hx-trigger="load, every 2s" class=""></div>
+			<div hx-get="/api/stats" hx-trigger="load, every 30s" class=""></div>
 				<a
 					class="cursor-pointer w-full text-white border-white border-2 mt-2 px-4 py-1 text-center"
 					hx-get="/api/logout"
@@ -34,6 +34,7 @@
 		</div>
 
 		<script src="/static/htmx.min.js"></script>
+		<script src="/static/response-targets.js"></script>
 		<script src="/static/main.js"></script>
 	</div>
 

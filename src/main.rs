@@ -27,7 +27,7 @@ use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::Subs
 
 use crate::store::{articles::Article, paragraphs::Paragraph};
 use dotenv::dotenv;
-use store::{SchemaUp, stats::Stats};
+use store::{SchemaUp, stats::Stats, contacts::ContactRequest};
 
 mod api;
 mod auth;
@@ -106,6 +106,7 @@ async fn main() {
             Article::up(&state.db).unwrap();
             Paragraph::up(&state.db).unwrap();
             Stats::up(&state.db).unwrap();
+            ContactRequest::up(&state.db).unwrap();
         }
         Command::Dev => {
             let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

@@ -1,6 +1,7 @@
 use crate::auth::Auth;
 use crate::auth::AUTH_COOKIE;
 use crate::store::articles::Article;
+use crate::store::contacts::ContactRequest;
 use crate::store::paragraphs::Paragraph;
 use crate::store::paragraphs::ParagraphType;
 use crate::store::stats::Stats;
@@ -53,6 +54,8 @@ pub fn api_routes() -> Router<Arc<SharedState>, axum::body::Body> {
         .route("/login", post(login))
         .route("/stats", get(get_stats))
         .route("/logout", get(logout))
+        .route("/contact", post(post_contact))
+        .route("/contact/:id", get(get_contact_message))
 }
 
 // ------------------------------------------------------
@@ -252,12 +255,12 @@ async fn paragraph_get(
 ) -> impl IntoResponse {
     match Paragraph::find(id, &state.db) {
         Ok(p) => {
-            let rendered = match p.rendered{
+            let rendered = match p.rendered {
                 Some(r) => r,
                 None => p.content,
             };
             Ok((StatusCode::OK, Html(rendered)))
-        },
+        }
         Err(_) => Err((StatusCode::BAD_REQUEST, "failed to get")),
     }
 }
@@ -377,7 +380,6 @@ async fn file_upload(
 // stats
 // ------------------------------------------------------
 async fn get_stats(auth: Auth, State(state): State<Arc<SharedState>>) -> impl IntoResponse {
-
     require_admin!(auth);
 
     let stats = match Stats::get_last_days(3, &state.db) {
@@ -385,13 +387,80 @@ async fn get_stats(auth: Auth, State(state): State<Arc<SharedState>>) -> impl In
         Err(_) => return Err((StatusCode::BAD_REQUEST, "failed to get")),
     };
 
-    let tmpl = match state
-        .templates
-        .get_template("components/stats.html")
-    {
+    let message_count = match ContactRequest::count_all(&state.db) {
+        Ok(count) => count,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "failed to get")),
+    };
+
+    let top_ten = match ContactRequest::find_all_orderd(10, 0, &state.db) {
+        Ok(top_ten) => top_ten,
+        Err(e) => {
+            println!("error: {}", e);
+            return Err((StatusCode::BAD_REQUEST, "failed to get"));
+        }
+    };
+
+    let tmpl = match state.templates.get_template("components/stats.html") {
         Ok(tmpl) => tmpl,
         Err(_) => return Err((StatusCode::BAD_REQUEST, "missing template")),
     };
 
-    Ok(Html(tmpl.render(context! {stats=>stats}).unwrap()))
+    Ok(Html(
+        tmpl.render(context! {stats=>stats, message_count=>message_count, top_ten=>top_ten})
+            .unwrap(),
+    ))
+}
+
+// ------------------------------------------------------
+// Contact requests
+// ------------------------------------------------------
+#[derive(serde::Deserialize)]
+struct ContactForm {
+    email: String,
+    subject: String,
+    message: String,
+}
+
+async fn post_contact(
+    State(state): State<Arc<SharedState>>,
+    Form(form): Form<ContactForm>,
+) -> impl IntoResponse {
+    let mut contact_request = ContactRequest {
+        id: None,
+        created: chrono::offset::Local::now().timestamp(),
+        email: form.email,
+        subject: form.subject,
+        message: form.message,
+    };
+
+    contact_request.insert(&state.db);
+
+    let tmpl = match state.templates.get_template("components/success.html") {
+        Ok(tmpl) => tmpl,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "missing template")),
+    };
+
+    Ok(Html(tmpl.render(context! {}).unwrap()))
+}
+
+// ------------------------------------------------------
+// Contact message get
+// ------------------------------------------------------
+async fn get_contact_message(
+    Path(id): Path<i64>,
+    auth: Auth,
+    State(state): State<Arc<SharedState>>,
+) -> impl IntoResponse {
+    require_admin!(auth);
+
+    let message = match ContactRequest::find(id, &state.db) {
+        Ok(count) => count,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "failed to get")),
+    };
+    let tmpl = match state.templates.get_template("components/mail.html") {
+        Ok(tmpl) => tmpl,
+        Err(_) => return Err((StatusCode::BAD_REQUEST, "missing template")),
+    };
+
+    Ok(Html(tmpl.render(context! { mail=>message }).unwrap()))
 }

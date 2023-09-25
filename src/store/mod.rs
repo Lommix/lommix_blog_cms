@@ -1,6 +1,7 @@
 pub mod articles;
 pub mod paragraphs;
 pub mod stats;
+pub mod contacts;
 
 pub fn schema_up(con: &rusqlite::Connection) -> Result<(), rusqlite::Error> {
     Ok(())
