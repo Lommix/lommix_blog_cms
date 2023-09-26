@@ -52,7 +52,22 @@ async function run_wasm(wasm_path, script_path, canvas_id, height) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+	// highlight markdown code blocks
 	if (typeof hljs !== "undefined") {
 		hljs.highlightAll();
 	}
+	// set nav
+	setActiveNav();
 });
+
+function setActiveNav() {
+	const nav = document.getElementById("nav-links");
+	const current_url = window.location.toString();
+	nav.querySelectorAll("a").forEach((child) => {
+		if (child.href == current_url) {
+			child.classList.add("underline");
+		} else {
+			child.classList.remove("underline");
+		}
+	});
+}
