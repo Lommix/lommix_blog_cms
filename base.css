@@ -120,6 +120,9 @@ body{
 	@apply shadow-slate-950;
 	@apply shadow-lg;
 }
+.markdown code{
+	overflow-y: scroll;
+}
 .markdown img{
 	margin : auto;
 }
