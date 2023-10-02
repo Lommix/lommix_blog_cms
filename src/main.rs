@@ -149,6 +149,7 @@ async fn main() {
 fn setup_router(state: Arc<SharedState>) -> IntoMakeServiceWithConnectInfo<Router, SocketAddr> {
     Router::new()
         .route("/static/*asset", get(asset_handle))
+        .route("/favicon.ico", get(get_favicon))
         .nest("/", pages::page_routes())
         .nest("/api", api::api_routes())
         .with_state(state)
@@ -202,6 +203,26 @@ async fn redirect_http_to_https(https_port: u16, http_port: u16) {
         .serve(router)
         .await
         .unwrap();
+}
+
+
+// --------------------------------------------------------
+// favicon
+// --------------------------------------------------------
+async fn get_favicon() -> impl IntoResponse{
+    let file = match tokio::fs::File::open("static/favicon.ico").await {
+        Ok(file) => file,
+        Err(e) => {
+            println!("error opening file: {}", e);
+            return Err((StatusCode::NOT_FOUND, "file not found"));
+        }
+    };
+
+    let stream = tokio_util::io::ReaderStream::new(file);
+    let body = StreamBody::new(stream);
+    let headers = [(axum::http::header::CONTENT_TYPE, "image/x-icon")];
+
+    Ok((headers, body))
 }
 
 // --------------------------------------------------------
