@@ -10,9 +10,11 @@ use crate::UserState;
 
 use super::store::*;
 use super::SharedState;
+use axum::extract::Query;
 use axum::extract::{Path, State};
 use axum::http::HeaderMap;
 use axum::http::StatusCode;
+use axum::response::Response;
 use axum::response::{Html, IntoResponse};
 use axum::routing::{delete, get, post};
 use axum::Form;
@@ -38,6 +40,8 @@ macro_rules! require_admin {
 pub fn api_routes() -> Router<Arc<SharedState>, axum::body::Body> {
     Router::new()
         .route("/article", post(article_create).get(article_list))
+        .route("/articles/:offset/:limit", get(article_page))
+        .route("/articles/:offset/:limit/:tag", get(article_page_filtered))
         .route(
             "/article/:id",
             get(article_get).delete(article_delete).put(article_update),
@@ -157,6 +161,77 @@ pub async fn article_list(State(state): State<Arc<SharedState>>, auth: Auth) -> 
         })
         .unwrap(),
     ))
+}
+
+pub async fn article_page_filtered(
+    Path((offset, limit, tag)): Path<(i64, i64, String)>,
+    State(state): State<Arc<SharedState>>,
+    auth: Auth,
+) -> Response {
+    let mut articles = match Article::find_articles_page(&state.db, &tag, offset, limit) {
+        Ok(articles) => articles,
+        Err(err) => {
+            dbg!(err);
+            return (StatusCode::BAD_REQUEST, "failed to find articles").into_response()},
+    };
+
+    let tmpl = match state
+        .templates
+        .get_template("components/article_preview_box.html")
+    {
+        Ok(tmpl) => tmpl,
+        Err(_) => return (StatusCode::BAD_REQUEST, "missing template").into_response(),
+    };
+
+    if !auth.is_admin() {
+        articles = articles
+            .drain(..)
+            .filter(|a| a.published)
+            .collect::<Vec<_>>();
+    }
+
+    Html(
+        tmpl.render(context! {
+            articles => articles,
+            auth => auth
+        })
+        .unwrap(),
+    )
+    .into_response()
+}
+
+pub async fn article_page(
+    Path((offset, limit)): Path<(i64, i64)>,
+    State(state): State<Arc<SharedState>>,
+    auth: Auth,
+) -> Response {
+    let mut articles = match Article::find_articles_page(&state.db, "", offset, limit) {
+        Ok(articles) => articles,
+        Err(_) => return (StatusCode::BAD_REQUEST, "failed to find articles").into_response(),
+    };
+    let tmpl = match state
+        .templates
+        .get_template("components/article_preview_box.html")
+    {
+        Ok(tmpl) => tmpl,
+        Err(_) => return (StatusCode::BAD_REQUEST, "missing template").into_response(),
+    };
+
+    if !auth.is_admin() {
+        articles = articles
+            .drain(..)
+            .filter(|a| a.published)
+            .collect::<Vec<_>>();
+    }
+
+    Html(
+        tmpl.render(context! {
+            articles => articles,
+            auth => auth
+        })
+        .unwrap(),
+    )
+    .into_response()
 }
 
 async fn article_delete(
