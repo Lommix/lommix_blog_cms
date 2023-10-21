@@ -40,8 +40,8 @@ macro_rules! require_admin {
 pub fn api_routes() -> Router<Arc<SharedState>, axum::body::Body> {
     Router::new()
         .route("/article", post(article_create).get(article_list))
-        .route("/articles/:offset/:limit", get(article_page))
-        .route("/articles/:offset/:limit/:tag", get(article_page_filtered))
+        .route("/articles/:offset/:limit", get(article_list_paginated))
+        .route("/articles/:offset/:limit/:tag", get(article_list_paginated_filterd))
         .route(
             "/article/:id",
             get(article_get).delete(article_delete).put(article_update),
@@ -163,12 +163,12 @@ pub async fn article_list(State(state): State<Arc<SharedState>>, auth: Auth) -> 
     ))
 }
 
-pub async fn article_page_filtered(
+pub async fn article_list_paginated_filterd(
     Path((offset, limit, tag)): Path<(i64, i64, String)>,
     State(state): State<Arc<SharedState>>,
     auth: Auth,
 ) -> Response {
-    let mut articles = match Article::find_articles_page(&state.db, &tag, offset, limit) {
+    let mut articles = match Article::find_articles_paginated(&state.db, &tag, offset, limit) {
         Ok(articles) => articles,
         Err(err) => {
             dbg!(err);
@@ -200,12 +200,12 @@ pub async fn article_page_filtered(
     .into_response()
 }
 
-pub async fn article_page(
+pub async fn article_list_paginated(
     Path((offset, limit)): Path<(i64, i64)>,
     State(state): State<Arc<SharedState>>,
     auth: Auth,
 ) -> Response {
-    let mut articles = match Article::find_articles_page(&state.db, "", offset, limit) {
+    let mut articles = match Article::find_articles_paginated(&state.db, "", offset, limit) {
         Ok(articles) => articles,
         Err(_) => return (StatusCode::BAD_REQUEST, "failed to find articles").into_response(),
     };

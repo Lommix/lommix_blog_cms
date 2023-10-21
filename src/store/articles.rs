@@ -63,7 +63,7 @@ impl Article {
         Err(rusqlite::Error::QueryReturnedNoRows)
     }
 
-    pub fn find_articles_page(
+    pub fn find_articles_paginated(
         con: &rusqlite::Connection,
         tag: &str,
         offset: i64,
