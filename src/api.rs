@@ -41,7 +41,10 @@ pub fn api_routes() -> Router<Arc<SharedState>, axum::body::Body> {
     Router::new()
         .route("/article", post(article_create).get(article_list))
         .route("/articles/:offset/:limit", get(article_list_paginated))
-        .route("/articles/:offset/:limit/:tag", get(article_list_paginated_filterd))
+        .route(
+            "/articles/:offset/:limit/:tag",
+            get(article_list_paginated_filterd),
+        )
         .route(
             "/article/:id",
             get(article_get).delete(article_delete).put(article_update),
@@ -99,6 +102,7 @@ async fn login(
                 .unwrap(),
         );
         header.insert("HX-Refresh", "true".parse().unwrap());
+        header.insert("X-Robots-Tag", "noindex".parse().unwrap());
 
         return Ok((header, Html("success".to_string())));
     }
@@ -126,6 +130,7 @@ async fn logout(auth: Auth, State(state): State<Arc<SharedState>>) -> impl IntoR
         .unwrap(),
     );
     header.insert("HX-Redirect", "/".parse().unwrap());
+    header.insert("X-Robots-Tag", "noindex".parse().unwrap());
 
     Ok((header, Html("success".to_string())))
 }
@@ -154,12 +159,18 @@ pub async fn article_list(State(state): State<Arc<SharedState>>, auth: Auth) -> 
             .collect::<Vec<_>>();
     }
 
-    Ok(Html(
-        tmpl.render(context! {
-            articles => articles,
-            auth => auth
-        })
-        .unwrap(),
+    let mut header = HeaderMap::new();
+    header.insert("X-Robots-Tag", "noindex".parse().unwrap());
+
+    Ok((
+        header,
+        Html(
+            tmpl.render(context! {
+                articles => articles,
+                auth => auth
+            })
+            .unwrap(),
+        ),
     ))
 }
 
@@ -172,7 +183,8 @@ pub async fn article_list_paginated_filterd(
         Ok(articles) => articles,
         Err(err) => {
             dbg!(err);
-            return (StatusCode::BAD_REQUEST, "failed to find articles").into_response()},
+            return (StatusCode::BAD_REQUEST, "failed to find articles").into_response();
+        }
     };
 
     let tmpl = match state
@@ -190,14 +202,20 @@ pub async fn article_list_paginated_filterd(
             .collect::<Vec<_>>();
     }
 
-    Html(
-        tmpl.render(context! {
-            articles => articles,
-            auth => auth
-        })
-        .unwrap(),
+    let mut header = HeaderMap::new();
+    header.insert("X-Robots-Tag", "noindex".parse().unwrap());
+
+    (
+        header,
+        Html(
+            tmpl.render(context! {
+                articles => articles,
+                auth => auth
+            })
+            .unwrap(),
+        ),
     )
-    .into_response()
+        .into_response()
 }
 
 pub async fn article_list_paginated(
@@ -224,14 +242,20 @@ pub async fn article_list_paginated(
             .collect::<Vec<_>>();
     }
 
-    Html(
-        tmpl.render(context! {
-            articles => articles,
-            auth => auth
-        })
-        .unwrap(),
+    let mut header = HeaderMap::new();
+    header.insert("X-Robots-Tag", "noindex".parse().unwrap());
+
+    (
+        header,
+        Html(
+            tmpl.render(context! {
+                articles => articles,
+                auth => auth
+            })
+            .unwrap(),
+        ),
     )
-    .into_response()
+        .into_response()
 }
 
 async fn article_delete(
@@ -251,7 +275,11 @@ async fn article_get(
     State(state): State<Arc<SharedState>>,
 ) -> impl IntoResponse {
     let article = Article::find(id, &state.db).unwrap();
-    Html("blog_detail".to_string())
+
+    let mut header = HeaderMap::new();
+    header.insert("X-Robots-Tag", "noindex".parse().unwrap());
+
+    (header, Html("blog_detail".to_string()))
 }
 
 #[derive(serde::Deserialize)]
@@ -260,6 +288,7 @@ pub struct ArticleForm {
     teaser: Option<String>,
     cover: Option<String>,
     alias: Option<String>,
+    tags: Option<String>,
     published: bool,
 }
 
@@ -270,6 +299,7 @@ pub async fn article_create(
 ) -> impl IntoResponse {
     require_admin!(auth);
     let mut article = Article::new(form.title);
+
     match article.insert(&state.db) {
         Ok(_) => Ok((StatusCode::CREATED, Html("created".to_string()))),
         Err(e) => Err((StatusCode::BAD_REQUEST, "failed to create")),
@@ -290,9 +320,10 @@ async fn article_update(
     };
 
     article.title = form.title;
-    article.teaser = form.teaser.unwrap_or("".to_string());
-    article.cover = form.cover.unwrap_or("".to_string());
-    article.alias = form.alias.unwrap_or("".to_string());
+    article.teaser = form.teaser.unwrap_or(String::new());
+    article.cover = form.cover.unwrap_or(String::new());
+    article.alias = form.alias.unwrap_or(String::new());
+    article.tags = form.tags.unwrap_or(String::new());
     article.published = form.published;
 
     let tmpl = match state
@@ -330,11 +361,14 @@ async fn paragraph_get(
 ) -> impl IntoResponse {
     match Paragraph::find(id, &state.db) {
         Ok(p) => {
+            let mut header = HeaderMap::new();
+            header.insert("X-Robots-Tag", "noindex".parse().unwrap());
+
             let rendered = match p.rendered {
                 Some(r) => r,
                 None => p.content,
             };
-            Ok((StatusCode::OK, Html(rendered)))
+            Ok((StatusCode::OK, header, Html(rendered)))
         }
         Err(_) => Err((StatusCode::BAD_REQUEST, "failed to get")),
     }
